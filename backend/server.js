@@ -14,7 +14,7 @@ app.use(express.json());
 
 // Browser configuration
 const browserConfig = {
-  headless: 'new',
+  headless: true, // Set to false for debugging
   args: [
     '--no-sandbox',
     '--disable-setuid-sandbox',
@@ -33,8 +33,8 @@ const getRandomDelay = () => Math.floor(Math.random() * (3000 - 1000 + 1) + 1000
 // Function to delay execution
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Scraper for Amazon
-const scrapeAmazon = async (url) => {
+// Scraper for Amazon to get product details and reviews
+const scrapeAmazon = async (query, retries = 3) => {
   const browser = await puppeteer.launch(browserConfig);
   const page = await browser.newPage();
 
@@ -42,46 +42,144 @@ const scrapeAmazon = async (url) => {
     await page.setUserAgent(randomUseragent.getRandom());
     await page.setViewport({ width: 1920, height: 1080 });
 
-    await page.goto(url, { waitUntil: 'networkidle0', timeout: 30000 });
+    // Encode the query for the URL
+    const encodedQuery = encodeURIComponent(query);
+    const amazonSearchUrl = `https://www.amazon.com/s?k=${encodedQuery}`;
+
+    console.log(`Search URL: ${amazonSearchUrl}`);
+
+    // Go to the search page
+    await page.goto(amazonSearchUrl, { waitUntil: 'networkidle2', timeout: 30000 });
+
+    // Check if the page was redirected (e.g., to a "Did you mean?" page)
+    const currentUrl = page.url();
+    if (!currentUrl.includes('/s?')) {
+      console.log('Redirected to a different page. Trying to handle it...');
+
+      // Extract the corrected query (if available)
+      const correctedQuery = await page.evaluate(() => {
+        const correctionElement = document.querySelector('.a-spacing-small .a-color-state');
+        return correctionElement ? correctionElement.textContent.trim() : null;
+      });
+
+      if (correctedQuery) {
+        console.log(`Corrected query: ${correctedQuery}`);
+        return scrapeAmazon(correctedQuery, retries); // Retry with the corrected query
+      }
+    }
 
     await delay(getRandomDelay());
 
-    const data = await page.evaluate(() => {
-      const productName = document.querySelector('#productTitle')?.innerText.trim();
-      const rating = document.querySelector('span[data-hook="rating-out-of-text"]')?.innerText;
-      const reviewElements = Array.from(document.querySelectorAll('div[data-hook="review"]'));
+    // Get the first non-sponsored Amazon product link
+    const amazonLink = await page.evaluate(() => {
+      const results = document.querySelectorAll('.s-main-slot .s-result-item');
 
-      const reviews = reviewElements.map(review => ({
-        rating: review.querySelector('i[data-hook="review-star-rating"]')?.innerText,
-        title: review.querySelector('a[data-hook="review-title"]')?.innerText,
-        text: review.querySelector('span[data-hook="review-body"]')?.innerText,
-        date: review.querySelector('span[data-hook="review-date"]')?.innerText,
-        verified: review.querySelector('span[data-hook="avp-badge"]') !== null
-      })).filter(review => review.text && review.rating);
+      for (const result of results) {
+        // Skip sponsored products
+        const isSponsored = result.querySelector('.s-sponsored-label') || result.innerText.includes('Sponsored');
+        if (!isSponsored) {
+          const link = result.querySelector('a.a-link-normal');
+          if (link) {
+            return link.href;
+          }
+        }
+      }
 
-      return {
-        productName,
-        overallRating: rating,
-        reviews
-      };
+      return null; // No non-sponsored product found
     });
 
-    if (!data.productName || !data.reviews.length) {
-      throw new Error('Failed to extract product data');
+    if (!amazonLink) {
+      throw new Error('No non-sponsored Amazon product found');
     }
 
-    return {
-      source: 'Amazon',
-      url,
-      ...data
-    };
+    console.log(`Product URL: ${amazonLink}`);
+
+    // Visit the product page
+    await page.goto(amazonLink, { waitUntil: 'networkidle2', timeout: 30000 });
+
+    // Check if the page was redirected to a search results page or captcha page
+    const productPageUrl = page.url();
+    if (productPageUrl.includes('/s?') || productPageUrl.includes('/errors/')) {
+      if (retries > 0) {
+        console.log('Redirected to search results or captcha page. Retrying...');
+        return scrapeAmazon(query, retries - 1); // Retry the search
+      } else {
+        throw new Error('Failed to navigate to the product page after multiple retries.');
+      }
+    }
+
+    // Wait for the product title to load
+    await page.waitForFunction(() => document.querySelector('#productTitle'), { timeout: 30000 });
+
+    // Extract product details
+    const productDetails = await page.evaluate(() => {
+      const titleElement = document.querySelector('#productTitle');
+      const priceElement = document.querySelector('.a-price .a-offscreen');
+      const ratingElement = document.querySelector('.a-icon-alt');
+      // const descriptionElement = document.querySelector('#productDescription');
+      const specificationElements = document.querySelectorAll('#productOverview_feature_div .a-spacing-small');
+
+      const title = titleElement ? titleElement.textContent.trim() : 'No title found';
+      const price = priceElement ? priceElement.textContent.trim() : 'No price found';
+      const rating = ratingElement ? ratingElement.textContent.trim() : 'No rating found';
+      // const description = descriptionElement ? descriptionElement.textContent.trim() : 'No description found';
+      // const exchangeRates = {
+      //   '$': 83.0, // 1 USD = 83 INR
+      //   '€': 88.0, // 1 EUR = 88 INR
+      //   '£': 103.0, // 1 GBP = 103 INR
+      // };
+
+      // // Extract the currency symbol and amount
+      // const currencySymbol = price[0];
+      // const amount = parseFloat(price.replace(/[^0-9.]/g, ''));
+
+      // if (exchangeRates[currencySymbol]) {
+      //   const inrAmount = amount * exchangeRates[currencySymbol];
+      //   price = `₹${inrAmount.toFixed(2)}`; // Format as INR
+      // }
+      // Extract specifications
+      const specifications = {};
+      specificationElements.forEach((element) => {
+        const key = element.querySelector('.a-text-bold')?.textContent.trim().replace(':', '');
+        const value = element.querySelector('.po-break-word')?.textContent.trim();
+        if (key && value) {
+          specifications[key] = value;
+        }
+      });
+
+      return { title, price, rating, specifications };
+    });
+
+    // Wait for the reviews section to load
+    await page.waitForSelector('.review', { timeout: 30000 });
+
+    // Extract reviews with ratings
+    const reviews = await page.evaluate(() => {
+      const reviewElements = document.querySelectorAll('.review');
+      const reviews = [];
+
+      reviewElements.forEach((element, index) => {
+        if (index < 5) { // Limit to top 5 reviews
+          const reviewText = element.querySelector('.review-text-content')?.textContent.trim();
+          const reviewRating = element.querySelector('.a-icon-alt')?.textContent.trim();
+          if (reviewText && reviewRating) {
+            reviews.push({ review: reviewText, rating: reviewRating });
+          }
+        }
+      });
+
+      return reviews;
+    });
+
+    return { ...productDetails, reviews };
   } catch (error) {
-    console.error('Error scraping Amazon:', error);
-    return {
-      source: 'Amazon',
-      url,
-      error: 'Failed to fetch reviews'
-    };
+    console.error('Error in scrapeAmazon:', error);
+    if (retries > 0) {
+      console.log(`Retrying... Attempts left: ${retries - 1}`);
+      return scrapeAmazon(query, retries - 1); // Retry the search
+    } else {
+      throw new Error(`Failed to scrape Amazon: ${error.message}`);
+    }
   } finally {
     await browser.close();
   }
@@ -96,38 +194,7 @@ app.get('/api/reviews', async (req, res) => {
   }
 
   try {
-    // Search for Amazon product URL
-    const browser = await puppeteer.launch(browserConfig);
-    const page = await browser.newPage();
-
-    await page.setUserAgent(randomUseragent.getRandom());
-    await page.setViewport({ width: 1920, height: 1080 });
-
-    const searchQuery = `${query} site:amazon.in product reviews`;
-    await page.goto(`https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`, {
-      waitUntil: 'networkidle0',
-      timeout: 30000
-    });
-
-    await delay(getRandomDelay());
-
-    const urls = await page.evaluate(() => {
-      const links = Array.from(document.querySelectorAll('a'));
-      return links
-        .map(link => link.href)
-        .filter(url => url.includes('amazon.in/') && (url.includes('/dp/') || url.includes('/p/')))
-        .slice(0, 1); // Limit to one Amazon URL
-    });
-
-    if (!urls.length) {
-      return res.status(404).json({ error: 'No products found. Try a different search term.' });
-    }
-
-    const result = await scrapeAmazon(urls[0]);
-
-    if (result.error) {
-      return res.status(404).json({ error: result.error });
-    }
+    const result = await scrapeAmazon(query);
 
     res.json({
       query,
