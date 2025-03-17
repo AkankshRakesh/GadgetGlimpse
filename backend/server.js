@@ -1,10 +1,10 @@
 const express = require('express');
-const puppeteer = require('puppeteer-extra');
+const puppeteer = require('puppeteer-extra'); // Use puppeteer-extra
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 const randomUseragent = require('random-useragent');
 const cors = require('cors');
 
-puppeteer.use(StealthPlugin());
+puppeteer.use(StealthPlugin()); // Use the StealthPlugin
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -14,7 +14,7 @@ app.use(express.json());
 
 // Browser configuration
 const browserConfig = {
-  headless: true, // Set to false for debugging
+  headless: true,
   args: [
     '--no-sandbox',
     '--disable-setuid-sandbox',
@@ -24,7 +24,8 @@ const browserConfig = {
     '--ignore-certifcate-errors-spki-list',
     '--disable-accelerated-2d-canvas',
     '--disable-gpu'
-  ]
+  ],
+  timeout: 60000, // Increase timeout to 60 seconds
 };
 
 // Helper function to get a random delay
@@ -49,7 +50,7 @@ const scrapeAmazon = async (query, retries = 3) => {
     console.log(`Search URL: ${amazonSearchUrl}`);
 
     // Go to the search page
-    await page.goto(amazonSearchUrl, { waitUntil: 'networkidle2', timeout: 30000 });
+    await page.goto(amazonSearchUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
 
     // Check if the page was redirected (e.g., to a "Did you mean?" page)
     const currentUrl = page.url();
@@ -95,7 +96,7 @@ const scrapeAmazon = async (query, retries = 3) => {
     console.log(`Product URL: ${amazonLink}`);
 
     // Visit the product page
-    await page.goto(amazonLink, { waitUntil: 'networkidle2', timeout: 30000 });
+    await page.goto(amazonLink, { waitUntil: 'networkidle2', timeout: 60000 });
 
     // Check if the page was redirected to a search results page or captcha page
     const productPageUrl = page.url();
@@ -109,34 +110,19 @@ const scrapeAmazon = async (query, retries = 3) => {
     }
 
     // Wait for the product title to load
-    await page.waitForFunction(() => document.querySelector('#productTitle'), { timeout: 30000 });
+    await page.waitForFunction(() => document.querySelector('#productTitle'), { timeout: 60000 });
 
     // Extract product details
     const productDetails = await page.evaluate(() => {
       const titleElement = document.querySelector('#productTitle');
       const priceElement = document.querySelector('.a-price .a-offscreen');
       const ratingElement = document.querySelector('.a-icon-alt');
-      // const descriptionElement = document.querySelector('#productDescription');
       const specificationElements = document.querySelectorAll('#productOverview_feature_div .a-spacing-small');
 
       const title = titleElement ? titleElement.textContent.trim() : 'No title found';
       const price = priceElement ? priceElement.textContent.trim() : 'No price found';
       const rating = ratingElement ? ratingElement.textContent.trim() : 'No rating found';
-      // const description = descriptionElement ? descriptionElement.textContent.trim() : 'No description found';
-      // const exchangeRates = {
-      //   '$': 83.0, // 1 USD = 83 INR
-      //   '€': 88.0, // 1 EUR = 88 INR
-      //   '£': 103.0, // 1 GBP = 103 INR
-      // };
 
-      // // Extract the currency symbol and amount
-      // const currencySymbol = price[0];
-      // const amount = parseFloat(price.replace(/[^0-9.]/g, ''));
-
-      // if (exchangeRates[currencySymbol]) {
-      //   const inrAmount = amount * exchangeRates[currencySymbol];
-      //   price = `₹${inrAmount.toFixed(2)}`; // Format as INR
-      // }
       // Extract specifications
       const specifications = {};
       specificationElements.forEach((element) => {
@@ -151,7 +137,7 @@ const scrapeAmazon = async (query, retries = 3) => {
     });
 
     // Wait for the reviews section to load
-    await page.waitForSelector('.review', { timeout: 30000 });
+    await page.waitForSelector('.review', { timeout: 60000 });
 
     // Extract reviews with ratings
     const reviews = await page.evaluate(() => {
