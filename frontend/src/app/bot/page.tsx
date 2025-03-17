@@ -51,9 +51,8 @@ export default function BotPage() {
     setLoading(true);
     setError('');
     setReviewData(null);
-
     try {
-      const response = await fetch(`http://localhost:5000/api/reviews?query=${encodeURIComponent(query)}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/reviews?query=${encodeURIComponent(query)}`);
       if (!response.ok) {
         throw new Error('Failed to fetch reviews');
       }
