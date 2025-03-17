@@ -50,7 +50,7 @@ const scrapeAmazon = async (query, retries = 3) => {
     console.log(`Search URL: ${amazonSearchUrl}`);
 
     // Go to the search page
-    await page.goto(amazonSearchUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    await page.goto(amazonSearchUrl, { waitUntil: 'networkidle2', timeout: 60000 });
 
     // Check if the page was redirected (e.g., to a "Did you mean?" page)
     const currentUrl = page.url();
@@ -96,7 +96,7 @@ const scrapeAmazon = async (query, retries = 3) => {
     console.log(`Product URL: ${amazonLink}`);
 
     // Visit the product page
-    await page.goto(amazonLink, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    await page.goto(amazonLink, { waitUntil: 'networkidle2', timeout: 60000 });
 
     // Check if the page was redirected to a search results page or captcha page
     const productPageUrl = page.url();
