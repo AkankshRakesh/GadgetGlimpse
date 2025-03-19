@@ -89,6 +89,7 @@ export default function App() {
       const data = await response.json();
       setReviewData(data);
     } catch (err) {
+      console.log(err);
       setError('Failed to fetch reviews. Please try a different search term.');
     } finally {
       setLoading(false);
