@@ -27,7 +27,7 @@ const browserConfig = {
     '--disable-dev-shm-usage', // Add this to avoid memory issues
     '--disable-software-rasterizer',
   ],
-  timeout: 60000, // Increase timeout to 60 seconds
+  timeout: 120000, // Increase timeout to 60 seconds
 };
 
 // Helper function to get a random delay
