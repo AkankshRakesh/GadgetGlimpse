@@ -45,21 +45,18 @@ const scrapeAmazon = async (query, retries = 3) => {
     await page.setUserAgent(randomUseragent.getRandom());
     await page.setViewport({ width: 1920, height: 1080 });
 
-    // Encode the query for the URL
     const encodedQuery = encodeURIComponent(query);
     const amazonSearchUrl = `https://www.amazon.in/s?k=${encodedQuery}`;
 
     console.log(`Search URL: ${amazonSearchUrl}`);
 
-    // Go to the search page
-    await page.goto(amazonSearchUrl, { waitUntil: 'networkidle2', timeout: 60000 });
+    // Increase timeout for page navigation
+    await page.goto(amazonSearchUrl, { waitUntil: 'networkidle2', timeout: 120000 }); // 120 seconds
 
-    // Check if the page was redirected (e.g., to a "Did you mean?" page)
     const currentUrl = page.url();
     if (!currentUrl.includes('/s?')) {
       console.log('Redirected to a different page. Trying to handle it...');
 
-      // Extract the corrected query (if available)
       const correctedQuery = await page.evaluate(() => {
         const correctionElement = document.querySelector('.a-spacing-small .a-color-state');
         return correctionElement ? correctionElement.textContent.trim() : null;
@@ -67,18 +64,16 @@ const scrapeAmazon = async (query, retries = 3) => {
 
       if (correctedQuery) {
         console.log(`Corrected query: ${correctedQuery}`);
-        return scrapeAmazon(correctedQuery, retries); // Retry with the corrected query
+        return scrapeAmazon(correctedQuery, retries);
       }
     }
 
     await delay(getRandomDelay());
 
-    // Get the first non-sponsored Amazon product link
     const amazonLink = await page.evaluate(() => {
       const results = document.querySelectorAll('.s-main-slot .s-result-item');
 
       for (const result of results) {
-        // Skip sponsored products
         const isSponsored = result.querySelector('.s-sponsored-label') || result.innerText.includes('Sponsored');
         if (!isSponsored) {
           const link = result.querySelector('a.a-link-normal');
@@ -88,7 +83,7 @@ const scrapeAmazon = async (query, retries = 3) => {
         }
       }
 
-      return null; // No non-sponsored product found
+      return null;
     });
 
     if (!amazonLink) {
@@ -97,24 +92,22 @@ const scrapeAmazon = async (query, retries = 3) => {
 
     console.log(`Product URL: ${amazonLink}`);
 
-    // Visit the product page
-    await page.goto(amazonLink, { waitUntil: 'networkidle2', timeout: 60000 });
+    // Increase timeout for product page navigation
+    await page.goto(amazonLink, { waitUntil: 'networkidle2', timeout: 120000 }); // 120 seconds
 
-    // Check if the page was redirected to a search results page or captcha page
     const productPageUrl = page.url();
     if (productPageUrl.includes('/s?') || productPageUrl.includes('/errors/')) {
       if (retries > 0) {
         console.log('Redirected to search results or captcha page. Retrying...');
-        return scrapeAmazon(query, retries - 1); // Retry the search
+        return scrapeAmazon(query, retries - 1);
       } else {
         throw new Error('Failed to navigate to the product page after multiple retries.');
       }
     }
 
-    // Wait for the product title to load
-    await page.waitForFunction(() => document.querySelector('#productTitle'), { timeout: 60000 });
+    // Increase timeout for waiting for the product title
+    await page.waitForSelector('#productTitle', { timeout: 120000 }); // 120 seconds
 
-    // Extract product details
     const productDetails = await page.evaluate(() => {
       const titleElement = document.querySelector('#productTitle');
       const priceElement = document.querySelector('.a-price .a-offscreen');
@@ -125,7 +118,6 @@ const scrapeAmazon = async (query, retries = 3) => {
       const price = priceElement ? priceElement.textContent.trim() : 'No price found';
       const rating = ratingElement ? ratingElement.textContent.trim() : 'No rating found';
 
-      // Extract specifications
       const specifications = {};
       specificationElements.forEach((element) => {
         const key = element.querySelector('.a-text-bold')?.textContent.trim().replace(':', '');
@@ -138,16 +130,15 @@ const scrapeAmazon = async (query, retries = 3) => {
       return { title, price, rating, specifications };
     });
 
-    // Wait for the reviews section to load
-    await page.waitForSelector('.review', { timeout: 60000 });
+    // Increase timeout for waiting for reviews
+    await page.waitForSelector('.review', { timeout: 120000 }); // 120 seconds
 
-    // Extract reviews with ratings
     const reviews = await page.evaluate(() => {
       const reviewElements = document.querySelectorAll('.review');
       const reviews = [];
 
       reviewElements.forEach((element, index) => {
-        if (index < 5) { // Limit to top 5 reviews
+        if (index < 5) {
           const reviewText = element.querySelector('.review-text-content')?.textContent.trim();
           const reviewRating = element.querySelector('.a-icon-alt')?.textContent.trim();
           if (reviewText && reviewRating) {
@@ -164,7 +155,7 @@ const scrapeAmazon = async (query, retries = 3) => {
     console.error('Error in scrapeAmazon:', error);
     if (retries > 0) {
       console.log(`Retrying... Attempts left: ${retries - 1}`);
-      return scrapeAmazon(query, retries - 1); // Retry the search
+      return scrapeAmazon(query, retries - 1);
     } else {
       throw new Error(`Failed to scrape Amazon: ${error.message}`);
     }
