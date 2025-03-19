@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "GadgetReviewBot - Smart Product Review Analysis",
+  title: "GadgetGlimpse - Smart Product Review Analysis",
   description: "Analyze product reviews across multiple shopping sites instantly",
 };
 

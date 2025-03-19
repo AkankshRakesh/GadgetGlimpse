@@ -1,6 +1,6 @@
 'use client'
 import React, { useState } from 'react';
-import { Bot, Search, Star, AlertCircle, Loader2, ArrowLeft, Sparkles } from 'lucide-react';
+import { Bot, Search, Star, AlertCircle, Loader2, ArrowLeft, Sparkles, ClipboardCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 
@@ -50,11 +50,11 @@ const shimmerAnimation = {
 };
 
 const loadingPhrases = [
-  "Scanning Amazon reviews...",
-  "Analyzing product ratings...",
-  "Gathering specifications...",
-  "Processing review data...",
-  "Almost there..."
+  {text: "Scanning Amazon reviews...", icon: <Sparkles className="w-6 h-6 text-white" />},
+  {text: "Analyzing product ratings...", icon: <Search className="w-6 h-6 text-white" />},
+  {text: "Gathering specifications...", icon: <Bot className="w-6 h-6 text-white" />},
+  {text: "Processing review data...", icon:<Star className="w-6 h-6 text-white" /> },
+  {text: "Almost there...", icon:<ClipboardCheck className="w-6 h-6 text-white" /> }
 ];
 
 export default function App() {
@@ -113,7 +113,7 @@ export default function App() {
               <Link href="/" className="flex items-center space-x-3">
                 <Bot className="w-16 h-16 lg:w-8 lg:h-8 text-blue-600" />
                 <span className="text-2xl lg:text-xl mt-2 lg:mt-1 font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
-                  GadgetReviewBot
+                  GadgetGlimpse
                 </span>
               </Link>
             </motion.div>
@@ -157,7 +157,7 @@ export default function App() {
                     type="text"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Enter product name to search reviews..."
+                    placeholder="Enter product name..."
                     className="w-full px-6 py-4 pr-14 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none shadow-sm text-lg transition-all"
                   />
                   <motion.button
@@ -206,7 +206,7 @@ export default function App() {
                       <div className="relative">
                         <div className="absolute inset-0 rounded-full bg-blue-200 animate-ping" />
                         <div className="relative bg-blue-600 rounded-full p-4">
-                          <Sparkles className="w-6 h-6 text-white" />
+                        {loadingPhrases[loadingPhrase].icon}
                         </div>
                       </div>
                     </div>
@@ -216,7 +216,7 @@ export default function App() {
                       animate={{ opacity: 1, y: 0 }}
                       className="text-blue-800 text-lg text-center font-medium"
                     >
-                      {loadingPhrases[loadingPhrase]}
+                      {loadingPhrases[loadingPhrase].text}
                     </motion.p>
                     <div className="mt-6 bg-blue-100 rounded-full h-2 overflow-hidden">
                       <motion.div

@@ -45,7 +45,7 @@ const scrapeAmazon = async (query, retries = 3) => {
 
     // Encode the query for the URL
     const encodedQuery = encodeURIComponent(query);
-    const amazonSearchUrl = `https://www.amazon.com/s?k=${encodedQuery}`;
+    const amazonSearchUrl = `https://www.amazon.in/s?k=${encodedQuery}`;
 
     console.log(`Search URL: ${amazonSearchUrl}`);
 

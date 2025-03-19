@@ -37,7 +37,7 @@ export default function Home() {
               className="flex items-center space-x-3">
               <Bot className="w-16 h-16 lg:w-8 lg:h-8 text-blue-600" />
               <span className="text-2xl lg:text-xl mt-2 lg:mt-1 font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
-                GadgetReviewBot
+                GadgetGlimpse
               </span>
               </Link>
             </motion.div>
@@ -88,7 +88,7 @@ export default function Home() {
             transition={{ duration: 0.5 }}
             className="text-3xl font-bold text-center mb-12"
           >
-            Why Choose GadgetReviewBot?
+            Why Choose GadgetGlimpse?
           </motion.h2>
 
           <motion.div
