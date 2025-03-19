@@ -23,7 +23,9 @@ const browserConfig = {
     '--ignore-certifcate-errors',
     '--ignore-certifcate-errors-spki-list',
     '--disable-accelerated-2d-canvas',
-    '--disable-gpu'
+    '--disable-gpu',
+    '--disable-dev-shm-usage', // Add this to avoid memory issues
+    '--disable-software-rasterizer',
   ],
   timeout: 60000, // Increase timeout to 60 seconds
 };
