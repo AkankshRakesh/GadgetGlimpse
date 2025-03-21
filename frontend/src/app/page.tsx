@@ -20,7 +20,7 @@ const staggerContainer = {
 
 export default function Home() {
   return (
-    <main className="min-h-screen">
+    <>
       <div className="bg-gradient-to-b from-purple-950 to-black">
         <div className="container mx-auto px-4 lg:px-8 py-8">
           <motion.nav
@@ -46,7 +46,7 @@ export default function Home() {
               className='hidden lg:block'
             >
               <Link 
-                href="/bot"
+                href="/choice"
                 className="group bg-gradient-to-r from-pink-700 to-purple-700 text-white px-6 py-2.5 rounded-full hover:opacity-90 transition-all duration-300 shadow-lg inline-flex items-center"
                 aria-label="Try Now"
               >
@@ -77,7 +77,7 @@ export default function Home() {
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
             >
               <Link
-                href="/bot"
+                href="/choice"
                 className="inline-flex items-center bg-gradient-to-r from-purple-700 to-pink-700 text-white px-8 py-3 rounded-full hover:opacity-90 transition text-lg shadow-md"
                 aria-label="Start Analyzing"
               >
@@ -125,6 +125,6 @@ export default function Home() {
           </motion.div>
         </div>
       </div>
-    </main>
+    </>
   );
 }
