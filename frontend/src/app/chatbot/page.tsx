@@ -36,7 +36,7 @@ export default function App() {
 
     return (
       <div className="flex items-center mt-4">
-        <span className="mr-2 text-gray-300">{rating}/5</span>
+        <span className="mr-2 font-bold text-gray-300">{rating}/5</span>
         {Array.from({ length: fullStars }, (_, index) => (
           <Star key={`full-${index}`} className="w-5 h-5 fill-yellow-500 text-yellow-500" />
         ))}
@@ -67,7 +67,9 @@ export default function App() {
           <ul className="list-disc list-inside text-gray-300">
             {key_features.map((feature, index) => (
               <li key={index} className="flex items-center">
-                <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
+                <div className="flex-shrink-0 w-4 h-4 text-green-400 mr-2">
+                <CheckCircle className="w-full h-full" />
+              </div>
                 <div>{feature}</div>
               </li>
             ))}
@@ -93,7 +95,9 @@ export default function App() {
           <ul className="list-disc list-inside text-gray-300">
             {pros.map((pro, index) => (
               <li key={index} className="flex items-center">
-                <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
+                <div className="flex-shrink-0 w-4 h-4 text-green-400 mr-2">
+                <CheckCircle className="w-full h-full" />
+              </div>
                 <div>{pro}</div>
               </li>
             ))}
@@ -105,7 +109,9 @@ export default function App() {
           <ul className="list-disc list-inside text-gray-300">
             {cons.map((con, index) => (
               <li key={index} className="flex items-center">
-                <XCircle className="w-4 h-4 text-red-400 mr-2" />
+                <div className="flex-shrink-0 w-4 h-4 text-green-400 mr-2">
+                <XCircle className="w-full h-full" />
+              </div>
                 <div>{con}</div>
               </li>
             ))}
@@ -184,6 +190,9 @@ export default function App() {
             transition={{ duration: 0.5 }}
             className="w-full rounded-xl shadow-lg p-6 flex flex-col h-[80vh]"
           > 
+            <div className="mb-4 text-center text-sm lg:text-lg text-gray-300">
+            <p>Mention the product name, and let the bot do the rest!</p>
+          </div>
             <div className="flex-1 overflow-y-auto space-y-3 p-2 border border-gray-700 rounded-md">
               <AnimatePresence>
                 {messages.map((msg, index) => (
@@ -192,7 +201,7 @@ export default function App() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
-                    className={`p-3 rounded-lg w-fit  whitespace-pre-line ${msg.type === 'user' ? 'bg-blue-600 self-end' : 'bg-gray-700 self-start'}`}
+                    className={`p-3 rounded-lg w-fit text-xs lg:text-lg  whitespace-pre-line ${msg.type === 'user' ? 'bg-blue-600 self-end' : 'bg-gray-700 self-start'}`}
                   >
                     {msg.text}
                   </motion.div>
@@ -216,7 +225,7 @@ export default function App() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                className="flex-1 px-4 py-2 bg-gray-700 text-white rounded-lg outline-none"
+                className="flex-1 text-xs lg:text-lg px-4 py-2 bg-gray-700 text-white rounded-lg outline-none"
                 placeholder="Type a message..."
               />
               <motion.button
@@ -226,7 +235,7 @@ export default function App() {
                 disabled={loading}
                 className="ml-2 p-2 bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
-                <Send className="w-5 h-5" />
+                <Send className="w-4 h-4 lg:w-5 lg:h-5" />
               </motion.button>
             </div>
           </motion.div>
