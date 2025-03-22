@@ -1,42 +1,42 @@
 'use client';
 import React, { useState } from 'react';
-import { Bot, Search, Star, Loader2, ArrowLeft, Sparkles, ClipboardCheck, Send } from 'lucide-react';
+import { Bot, Loader2, ArrowLeft, Send } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 
-const fadeInUp = {
-  initial: { y: 20, opacity: 0 },
-  animate: { y: 0, opacity: 1 },
-  transition: { duration: 0.5 }
-};
+// const fadeInUp = {
+//   initial: { y: 20, opacity: 0 },
+//   animate: { y: 0, opacity: 1 },
+//   transition: { duration: 0.5 }
+// };
 
-const staggerContainer = {
-  animate: {
-    transition: {
-      staggerChildren: 0.4
-    }
-  }
-};
+// const staggerContainer = {
+//   animate: {
+//     transition: {
+//       staggerChildren: 0.4
+//     }
+//   }
+// };
 
-const shimmerAnimation = {
-  initial: { x: '-100%' },
-  animate: { 
-    x: '100%',
-    transition: {
-      repeat: Infinity,
-      duration: 1.5,
-      ease: "linear"
-    }
-  }
-};
+// const shimmerAnimation = {
+//   initial: { x: '-100%' },
+//   animate: { 
+//     x: '100%',
+//     transition: {
+//       repeat: Infinity,
+//       duration: 1.5,
+//       ease: "linear"
+//     }
+//   }
+// };
 
-const loadingPhrases = [
-  {text: "Scanning Amazon reviews...", icon: <Sparkles className="w-6 h-6 text-white" />},
-  {text: "Analyzing product ratings...", icon: <Search className="w-6 h-6 text-white" />},
-  {text: "Gathering specifications...", icon: <Bot className="w-6 h-6 text-white" />},
-  {text: "Processing review data...", icon:<Star className="w-6 h-6 text-white" /> },
-  {text: "Almost there...", icon:<ClipboardCheck className="w-6 h-6 text-white" /> }
-];
+// const loadingPhrases = [
+//   {text: "Scanning Amazon reviews...", icon: <Sparkles className="w-6 h-6 text-white" />},
+//   {text: "Analyzing product ratings...", icon: <Search className="w-6 h-6 text-white" />},
+//   {text: "Gathering specifications...", icon: <Bot className="w-6 h-6 text-white" />},
+//   {text: "Processing review data...", icon:<Star className="w-6 h-6 text-white" /> },
+//   {text: "Almost there...", icon:<ClipboardCheck className="w-6 h-6 text-white" /> }
+// ];
 
 export default function App() {
   const [messages, setMessages] = useState<{ text: string; type: 'user' | 'bot' }[]>([]);
@@ -68,13 +68,6 @@ export default function App() {
     }
   };
 
-  // Function to handle keydown events
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter') {
-      event.preventDefault(); // Prevent form submission if inside a form
-      handleSend();
-    }
-  };
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-purple-950 to-black">
