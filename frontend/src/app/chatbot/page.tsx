@@ -127,7 +127,7 @@ export default function App() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/generate_review?product_name=${encodeURIComponent(input)}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND2}/generate_review?product_name=${encodeURIComponent(input)}`);
       
       const data = await response.json();
       const formattedResponse = formatBotResponse(data);
