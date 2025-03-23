@@ -19,7 +19,7 @@ export function StarRating({ rating }: StarRatingProps) {
       ))}
       {hasHalfStar && (
         <div className="relative w-6 h-6 mr-1">
-          <Star className="absolute w-6 h-6 text-yellow-500" style={{ clipPath: "inset(0 50% 0 0)" }} />
+          <Star className="absolute w-6 h-6 fill-yellow-500 text-yellow-500" style={{ clipPath: "inset(0 50% 0 0)" }} />
           <Star className="absolute w-6 h-6 fill-gray-800 text-gray-400" style={{ clipPath: "inset(0 0 0 50%)" }} />
         </div>
       )}

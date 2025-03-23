@@ -126,7 +126,6 @@ export default function App() {
                   </motion.div>
                 ))}
               </AnimatePresence>
-
               {loading && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}

@@ -28,8 +28,8 @@ export default function ChooseTool() {
         <div className="absolute top-20 left-10 w-64 h-64 bg-pink-500/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-20 right-10 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl"></div>
       </div>
-
-      <div className="container mx-auto px-4 py-8 relative z-10">
+      
+      <div className="container mx-auto px-8 py-8 relative z-10">
       <motion.nav 
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -146,9 +146,9 @@ function OptionCard({
     <motion.div
       variants={fadeInUp}
       transition={{ duration: 0.6, delay }}
-      className={cn("group relative", featured && "md:-mt-4")}
+      className="group relative h-full"
     >
-      <Link href={href}>
+      <Link href={href} className="h-full">
         <div className="absolute inset-0.5 bg-gradient-to-r from-gray-800 to-gray-900 rounded-2xl blur-sm group-hover:blur-md transition-all duration-300"></div>
         <div
           className={cn(
@@ -158,29 +158,31 @@ function OptionCard({
           )}
         >
           <div className="bg-black/80 rounded-2xl h-full p-8 flex flex-col items-center text-center transition-transform duration-300 group-hover:scale-[0.99]">
+            
+            {/* "Recommended" Badge positioned better */}
             {featured && (
-              <div className="absolute top-1  left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-pink-500 to-purple-500 text-white text-xs font-bold py-1 px-4 rounded-full">
-                RECOMMENDED
+              <div className="absolute top-4 right-4 bg-gradient-to-r from-pink-500 to-purple-500 text-white text-xs font-bold py-1 px-3 rounded-full shadow-md">
+                Recommended
               </div>
             )}
 
+            {/* Icon */}
             <div
-              className={cn(
-                "w-16 h-16 rounded-full flex items-center justify-center mb-6 transition-all duration-300",
-                "bg-gradient-to-br from-gray-900 to-black",
-                "group-hover:shadow-[0_0_15px_rgba(255,255,255,0.2)]",
-              )}
+              className="w-16 h-16 rounded-full flex items-center justify-center mb-6 bg-gradient-to-br from-gray-900 to-black group-hover:shadow-[0_0_15px_rgba(255,255,255,0.2)]"
             >
               {icon}
             </div>
 
+            {/* Title */}
             <h2 className="text-2xl font-bold mb-3 text-white flex items-center">
               {title}
               <ArrowRight className="ml-2 w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
             </h2>
 
-            <p className="text-gray-300 mb-6">{description}</p>
+            {/* Description */}
+            <p className="text-gray-300 flex-grow mb-5">{description}</p>
 
+            {/* CTA Button */}
             <div className="mt-auto">
               <span className="inline-flex items-center justify-center py-2 px-4 rounded-full bg-white/10 text-sm font-medium text-white group-hover:bg-white/20 transition-all duration-300">
                 Get Started
