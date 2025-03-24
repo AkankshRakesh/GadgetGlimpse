@@ -45,7 +45,7 @@ const scrapeAmazon = async (query, retries = 3) => {
 
     // Encode the query for the URL
     const encodedQuery = encodeURIComponent(query);
-    const amazonSearchUrl = `https://www.amazon.in/s?k=${encodedQuery}`;
+    const amazonSearchUrl = `https://www.amazon.in/s?k=${encodedQuery}&i=electronics`;
 
     console.log(`Search URL: ${amazonSearchUrl}`);
 
@@ -111,19 +111,55 @@ const scrapeAmazon = async (query, retries = 3) => {
 
     // Wait for the product title to load
     await page.waitForFunction(() => document.querySelector('#productTitle'), { timeout: 60000 });
-
+    await page.evaluate(async () => {
+      // Scroll down to the Manufacturer section to trigger lazy-loading
+      const manufacturerSection = document.querySelector('.aplus-module');
+      if (manufacturerSection) {
+        manufacturerSection.scrollIntoView();
+        await new Promise(r => setTimeout(r, 2000)); // Wait for images to load
+      }
+    });
     // Extract product details
+    // Extract product details along with images
     const productDetails = await page.evaluate(() => {
       const titleElement = document.querySelector('#productTitle');
       const priceElement = document.querySelector('.a-price .a-offscreen');
       const ratingElement = document.querySelector('.a-icon-alt');
       const specificationElements = document.querySelectorAll('#productOverview_feature_div .a-spacing-small');
-
+    
       const title = titleElement ? titleElement.textContent.trim() : 'No title found';
       const price = priceElement ? priceElement.textContent.trim() : 'No price found';
       const rating = ratingElement ? ratingElement.textContent.trim() : 'No rating found';
+    
+      let images = new Set(); // Use Set to avoid duplicates
 
-      // Extract specifications
+  // ✅ Step 1: "From the Manufacturer" Images
+  document.querySelectorAll('[data-a-dynamic-image]').forEach(element => {
+    const dataImages = JSON.parse(element.getAttribute('data-a-dynamic-image'));
+    Object.keys(dataImages).forEach(imgSrc => {
+      if (imgSrc.includes('https') && dataImages[imgSrc] > 100000 && !img.src.includes('sprite') && !imgSrc.includes('icon') && !imgSrc.includes('badge') && !imgSrc.includes('logo')) { // Only keep large images
+        images.add(imgSrc.replace(/_.*?\./, '_SL1500.'));
+      }
+    });
+  });
+  document.querySelectorAll('.a-row img').forEach(img => {
+    if (img.src.includes('https') && !img.src.includes('sprite') && !img.src.includes('icon') && !img.src.includes('badge') && !img.src.includes('logo')) {
+      images.add(img.src.replace(/_.*?\./, '_SL1500.')); // Force high resolution
+    }
+  });
+
+  // ✅ Step 2: Product Gallery High-Res Images
+  document.querySelectorAll('#imgTagWrapperId img').forEach(img => {
+    if (img.src.includes('https') && !img.src.includes('sprite') && !img.src.includes('icon') && !img.src.includes('badge') && !img.src.includes('logo')) {
+      images.add(img.src.replace(/_.*?\./, '_SL1500.'));
+    }
+  });
+
+  // ✅ Step 3: Dynamic Amazon CDN High-Quality Images
+
+  // ✅ Step 4: Filter Out Low-Quality Images (Less than 800px width)
+  let highQualityImages = Array.from(images).filter(img => img.includes("_SL1500"));
+    
       const specifications = {};
       specificationElements.forEach((element) => {
         const key = element.querySelector('.a-text-bold')?.textContent.trim().replace(':', '');
@@ -132,32 +168,49 @@ const scrapeAmazon = async (query, retries = 3) => {
           specifications[key] = value;
         }
       });
-
-      return { title, price, rating, specifications };
+    
+      return { title, price, rating, specifications, images: highQualityImages.slice(-4) };
     });
+    
+    
+
 
     // Wait for the reviews section to load
     await page.waitForSelector('.review', { timeout: 60000 });
 
     // Extract reviews with ratings
-    const reviews = await page.evaluate(() => {
-      const reviewElements = document.querySelectorAll('.review');
-      const reviews = [];
+    // Extract reviews with a mix of positive and negative feedback
+const reviews = await page.evaluate(() => {
+  const reviewElements = document.querySelectorAll('.review');
+  const reviews = [];
 
-      reviewElements.forEach((element, index) => {
-        if (index < 5) { // Limit to top 5 reviews
-          const reviewText = element.querySelector('.review-text-content')?.textContent.trim();
-          const reviewRating = element.querySelector('.a-icon-alt')?.textContent.trim();
-          if (reviewText && reviewRating) {
-            reviews.push({ review: reviewText, rating: reviewRating });
-          }
-        }
-      });
+  reviewElements.forEach((element) => {
+    const reviewText = element.querySelector('.review-text-content')?.textContent.trim();
+    const reviewRatingText = element.querySelector('.a-icon-alt')?.textContent.trim();
+    const reviewRating = reviewRatingText ? parseFloat(reviewRatingText.split(' ')[0]) : null;
 
-      return reviews;
-    });
+    if (reviewText && reviewRating !== null) {
+      reviews.push({ review: reviewText, rating: reviewRating });
+    }
+  });
 
-    return { ...productDetails, reviews };
+  // Sort reviews: prioritize a mix of good (4+) and bad (1-2) reviews
+  const positiveReviews = reviews.filter(r => r.rating >= 4);
+  const negativeReviews = reviews.filter(r => r.rating <= 2);
+  const averageReviews = reviews.filter(r => r.rating === 3);
+
+  // Ensure the required mix of reviews
+  const selectedReviews = [
+    ...negativeReviews.slice(0, 2), // 2 bad reviews
+    ...positiveReviews.slice(0, 2), // 2 good reviews
+    ...averageReviews.slice(0, 1),  // 1 average review
+  ];
+
+  return selectedReviews.length > 0 ? selectedReviews : reviews.slice(0, 5);
+});
+
+
+    return { ...productDetails, reviews, amazonLink };
   } catch (error) {
     console.error('Error in scrapeAmazon:', error);
     if (retries > 0) {
