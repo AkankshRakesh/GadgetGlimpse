@@ -1,9 +1,20 @@
 "use client"
 import React, { useState } from "react"
-import { Bot, Search, Star, AlertCircle, Loader2, ArrowLeft, Sparkles, ClipboardCheck } from "lucide-react"
+import {
+  Bot,
+  Search,
+  Star,
+  AlertCircle,
+  Loader2,
+  ArrowLeft,
+  Sparkles,
+  ClipboardCheck,
+  X,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
-
 
 interface Review {
   review: string
@@ -66,6 +77,9 @@ export default function App() {
   const [error, setError] = useState("")
   const [reviewData, setReviewData] = useState<ReviewData | null>(null)
   const [loadingPhrase, setLoadingPhrase] = useState(0)
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [activeResultIndex, setActiveResultIndex] = useState(0)
 
   React.useEffect(() => {
     let interval: NodeJS.Timeout
@@ -99,16 +113,39 @@ export default function App() {
     }
   }
 
+  const openImageModal = (imageUrl: string, index: number, resultIndex: number) => {
+    setSelectedImage(imageUrl)
+    setCurrentImageIndex(index)
+    setActiveResultIndex(resultIndex)
+  }
+
+  const closeImageModal = () => {
+    setSelectedImage(null)
+  }
+
+  const navigateImage = (direction: "next" | "prev") => {
+    if (!reviewData?.results[activeResultIndex]?.images) return
+
+    const images = reviewData.results[activeResultIndex].images
+    const newIndex =
+      direction === "next"
+        ? (currentImageIndex + 1) % images.length
+        : (currentImageIndex - 1 + images.length) % images.length
+
+    setCurrentImageIndex(newIndex)
+    setSelectedImage(images[newIndex])
+  }
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-purple-950 to-black text-white">
       <div className="container mx-auto px-4 lg:px-8 py-8 md:py-12">
-      <motion.nav 
+        <motion.nav
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5 }}
           className="flex justify-center lg:justify-between items-center mb-8 lg:mb-16"
         >
-          <motion.div 
+          <motion.div
             whileHover={{ scale: 1.05 }}
             transition={{ type: "spring", stiffness: 400, damping: 10 }}
             className="flex items-center space-x-3"
@@ -120,8 +157,8 @@ export default function App() {
               </span>
             </Link>
           </motion.div>
-          
-          <motion.div 
+
+          <motion.div
             whileHover={{ scale: 1.05 }}
             transition={{ type: "spring", stiffness: 400, damping: 10 }}
             className="hidden lg:block"
@@ -135,7 +172,7 @@ export default function App() {
             </Link>
           </motion.div>
         </motion.nav>
-        
+
         <motion.div variants={staggerContainer} initial="initial" animate="animate" className="max-w-4xl mx-auto">
           <motion.div
             variants={fadeInUp}
@@ -258,45 +295,48 @@ export default function App() {
                     transition={{ duration: 0.5, delay: index * 0.1 }}
                     className="mt-8"
                   >
-                      <div className="absolute top-0 right-0 w-40 h-40 bg-purple-600/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
-                      <div className="absolute bottom-0 left-0 w-40 h-40 bg-pink-600/10 rounded-full blur-3xl -ml-20 -mb-20 pointer-events-none"></div>
+                    <div className="absolute top-0 right-0 w-40 h-40 bg-purple-600/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
+                    <div className="absolute bottom-0 left-0 w-40 h-40 bg-pink-600/10 rounded-full blur-3xl -ml-20 -mb-20 pointer-events-none"></div>
 
-                      {/* <Link href={result.link}><h2 className="text-2xl font-semibold mb-4 ml-2 text-white">{result.title}</h2></Link> */}
-                      <a href={result.amazonLink} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                        <h2 className="text-2xl font-semibold mb-4 ml-2 text-white">{result.title}</h2>
-                      </a>
+                    <a
+                      href={result.amazonLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:underline"
+                    >
+                      <h2 className="text-2xl font-semibold mb-4 ml-2 text-white">{result.title}</h2>
+                    </a>
 
-                      <div className="flex flex-wrap gap-4 items-center text-gray-300 mb-6">
-                        <div className="flex items-center bg-gray-700/70 px-4 py-2 rounded-full shadow-sm border border-gray-600/50">
-                          <span className="font-medium mr-2">Amazon</span>
-                          <div className="flex items-center text-yellow-400">
-                            <Star className="w-5 h-5 fill-current" />
-                            <span className="ml-1 font-semibold">{result.rating}</span>
+                    <div className="flex flex-wrap gap-4 items-center text-gray-300 mb-6">
+                      <div className="flex items-center bg-gray-700/70 px-4 py-2 rounded-full shadow-sm border border-gray-600/50">
+                        <span className="font-medium mr-2">Amazon</span>
+                        <div className="flex items-center text-yellow-400">
+                          <Star className="w-5 h-5 fill-current" />
+                          <span className="ml-1 font-semibold">{result.rating}</span>
+                        </div>
+                      </div>
+                      <div className="bg-gray-700/70 px-4 py-2 rounded-full shadow-sm border border-gray-600/50">
+                        <span className="text-gray-300 mr-1">Price:</span>
+                        <span className="text-purple-300 font-medium">{result.price}</span>
+                      </div>
+                    </div>
+                    <p className="text-gray-300 mb-6 text-lg leading-relaxed">{result.description}</p>
+                    <h3 className="text-xl font-semibold mb-4 ml-2 text-white flex items-center">
+                      <span className="bg-gradient-to-r from-pink-500 to-purple-500 w-1 h-6 rounded mr-3"></span>
+                      Specifications
+                    </h3>
+                    <div className="bg-gray-700/50 backdrop-blur-sm rounded-xl p-6 border border-gray-600/50 shadow-inner">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {Object.entries(result.specifications).map(([key, value]) => (
+                          <div key={key} className="flex items-start space-x-2 group">
+                            <span className="text-gray-400 font-medium min-w-[120px] group-hover:text-purple-300 transition-colors">
+                              {key}:
+                            </span>
+                            <span className="text-gray-300 group-hover:text-white transition-colors">{value}</span>
                           </div>
-                        </div>
-                        <div className="bg-gray-700/70 px-4 py-2 rounded-full shadow-sm border border-gray-600/50">
-                          <span className="text-gray-300 mr-1">Price:</span>
-                          <span className="text-purple-300 font-medium">{result.price}</span>
-                        </div>
+                        ))}
                       </div>
-                      <p className="text-gray-300 mb-6 text-lg leading-relaxed">{result.description}</p>
-                      <h3 className="text-xl font-semibold mb-4 ml-2  text-white flex items-center">
-                          <span className="bg-gradient-to-r from-pink-500 to-purple-500 w-1 h-6 rounded mr-3"></span>
-                          Specifications
-                        </h3>
-                      <div className="bg-gray-700/50 backdrop-blur-sm rounded-xl p-6 border border-gray-600/50 shadow-inner">
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {Object.entries(result.specifications).map(([key, value]) => (
-                            <div key={key} className="flex items-start space-x-2 group">
-                              <span className="text-gray-400 font-medium min-w-[120px] group-hover:text-purple-300 transition-colors">
-                                {key}:
-                              </span>
-                              <span className="text-gray-300 group-hover:text-white transition-colors">{value}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+                    </div>
 
                     <div className="mt-6 space-y-4">
                       <h3 className="text-xl font-semibold text-white flex items-center ml-2">
@@ -324,26 +364,59 @@ export default function App() {
                         </motion.div>
                       ))}
                     </div>
-                    <h3 className="text-xl font-semibold mb-4 mt-4 ml-2  text-white flex items-center">
-                      <span className="bg-gradient-to-r from-pink-500 to-purple-500 w-1 h-6 rounded mr-3"></span>
-                      Images
-                    </h3>
-                    {result.images ? (<div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {result.images.map((image, imageIndex) => (
-                            <motion.img
-                              key={imageIndex}
-                              initial={{ opacity: 0, y: 10 }}
-                              whileInView={{ opacity: 1, y: 0 }}
-                              viewport={{ once: true }}
-                              transition={{ duration: 0.5, delay: imageIndex * 0.1 }}
-                              src={image}
-                              alt={result.title}
-                              className="rounded-xl w-full h-full object-cover shadow-lg"
+
+                    {/* Enhanced Image Gallery Section */}
+                    {result.images && result.images.length > 0 && (
+                      <div className="mt-6">
+                        <h3 className="text-xl font-semibold mb-4 ml-2 text-white flex items-center">
+                          <span className="bg-gradient-to-r from-pink-500 to-purple-500 w-1 h-6 rounded mr-3"></span>
+                          Product Images
+                        </h3>
+
+                        {/* Featured Image */}
+                        <div className="mb-4">
+                          <motion.div
+                            whileHover={{ scale: 1.02 }}
+                            transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                            className="relative aspect-video bg-gray-800 rounded-xl overflow-hidden shadow-lg cursor-pointer"
+                            onClick={() => openImageModal(result.images[0], 0, index)}
+                          >
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
+                            <img
+                              src={result.images[0] || "/placeholder.svg"}
+                              alt={`${result.title} - featured`}
+                              className="w-full h-full object-cover"
                             />
+                            <div className="absolute bottom-4 left-4 z-20 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full text-sm text-white">
+                              {result.images.length} images available
+                            </div>
+                          </motion.div>
+                        </div>
+
+                        {/* Thumbnail Gallery */}
+                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 md:gap-3">
+                          {result.images.map((image, imageIndex) => (
+                            <motion.div
+                              key={imageIndex}
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              whileInView={{ opacity: 1, scale: 1 }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 0.3, delay: imageIndex * 0.05 }}
+                              whileHover={{ scale: 1.05, y: -5 }}
+                              whileTap={{ scale: 0.95 }}
+                              className="aspect-square rounded-lg overflow-hidden cursor-pointer shadow-md border border-gray-700/50 hover:border-purple-500/50 transition-all duration-300"
+                              onClick={() => openImageModal(image, imageIndex, index)}
+                            >
+                              <img
+                                src={image || "/placeholder.svg"}
+                                alt={`${result.title} - ${imageIndex + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                            </motion.div>
                           ))}
                         </div>
-                      </div>) : (<> </>)}
+                      </div>
+                    )}
                   </motion.div>
                 ))}
               </AnimatePresence>
@@ -351,6 +424,88 @@ export default function App() {
           </motion.div>
         </motion.div>
       </div>
+
+      {/* Image Modal */}
+      <AnimatePresence>
+  {selectedImage && (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm"
+      onClick={closeImageModal}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+        className="relative max-w-5xl w-full max-h-[90vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          className="absolute top-4 right-4 z-10 bg-black/50 backdrop-blur-sm p-2 rounded-full text-white hover:bg-black/70 transition-colors"
+          onClick={closeImageModal}
+        >
+          <X className="w-6 h-6" />
+        </button>
+
+        <div className="relative flex-1 overflow-hidden rounded-xl">
+          <img
+            src={selectedImage || "/placeholder.svg"}
+            alt="Product image"
+            className="w-full h-full object-contain max-h-[90vh] max-w-full"
+          />
+
+          <button
+            className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 backdrop-blur-sm p-3 rounded-full text-white hover:bg-black/70 transition-colors"
+            onClick={() => navigateImage("prev")}
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+
+          <button
+            className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 backdrop-blur-sm p-3 rounded-full text-white hover:bg-black/70 transition-colors"
+            onClick={() => navigateImage("next")}
+          >
+            <ChevronRight className="w-6 h-6" />
+          </button>
+        </div>
+
+        {reviewData?.results[activeResultIndex]?.images && (
+          <div className="mt-4 overflow-x-auto pb-2">
+            <div className="flex space-x-2">
+              {reviewData.results[activeResultIndex].images.map((image, idx) => (
+                <div
+                  key={idx}
+                  className={`flex-shrink-0 w-20 h-20 rounded-md overflow-hidden cursor-pointer transition-all duration-300 ${
+                    idx === currentImageIndex
+                      ? "ring-2 ring-purple-500 scale-105"
+                      : "opacity-70 hover:opacity-100"
+                  }`}
+                  onClick={() => {
+                    setCurrentImageIndex(idx);
+                    setSelectedImage(image);
+                  }}
+                >
+                  <img
+                    src={image || "/placeholder.svg"}
+                    alt={`Thumbnail ${idx + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="mt-2 text-center text-white/80 text-sm">
+          {currentImageIndex + 1} / {reviewData?.results[activeResultIndex]?.images?.length || 0}
+        </div>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
     </main>
   )
 }
