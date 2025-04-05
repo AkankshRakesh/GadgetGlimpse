@@ -40,9 +40,9 @@ GadgetGlimpse is a **TypeScript-based** smart shopping companion built using **N
 ## Live Demo
   Link: https://gadget-glimpse.vercel.app/
 ## Screenshots
-![Screenshot 2025-03-30 205643](https://github.com/user-attachments/assets/b15d0bf7-066b-4716-a284-1060ee4df39a)
-![Screenshot 2025-03-30 205626](https://github.com/user-attachments/assets/5c2c5e40-8cfe-4145-ab2d-ef8c83efb3ec)
-![Screenshot 2025-03-30 205522](https://github.com/user-attachments/assets/727c7fa6-e04b-4e81-bb25-baa0643c0acc)
-![Screenshot 2025-03-30 205419](https://github.com/user-attachments/assets/1a72e7f4-f926-4f20-89fe-8372f4851911)
-![Screenshot 2025-03-30 210054](https://github.com/user-attachments/assets/f81922c8-51c9-49a6-8bde-44e0d5233769)
+![1](https://github.com/AkankshRakesh/GadgetGlimpse/blob/master/site-images/1.png)
+![2](https://github.com/AkankshRakesh/GadgetGlimpse/blob/master/site-images/2.png)
+![3](https://github.com/AkankshRakesh/GadgetGlimpse/blob/master/site-images/3.png)
+![4](https://github.com/AkankshRakesh/GadgetGlimpse/blob/master/site-images/4.png)
+![5](https://github.com/AkankshRakesh/GadgetGlimpse/blob/master/site-images/5.png)
 
