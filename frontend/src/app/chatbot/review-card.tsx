@@ -116,6 +116,10 @@ export function ReviewCard({ product, review }: ReviewProps) {
           </ul>
         </div>
       </div>
+
+      <div className="flex justify-between items-center mt-5">
+        <StarRating rating={final_rating} />
+      </div>
     </div>
   )
 }
