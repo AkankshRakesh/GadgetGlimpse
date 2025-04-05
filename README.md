@@ -30,7 +30,7 @@ GadgetGlimpse is a **TypeScript-based** smart shopping companion built using **N
  
   - AI model- Mistral-7B-Instruct-v0.3 and Gemini-Star-2.0
  
-- WebScraper
+- WebScraper - Might not work in deployment due to google's heavy capcha requirements
   - Runtime: Node.js
  
   - Framework: Express
