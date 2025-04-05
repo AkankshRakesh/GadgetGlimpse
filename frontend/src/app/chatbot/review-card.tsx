@@ -5,6 +5,7 @@ interface ReviewProps {
   product: string
   review: {
     overview: string
+    price?: string // Make price optional
     key_features: string[]
     performance: Record<string, string>
     pros: string[]
@@ -14,13 +15,23 @@ interface ReviewProps {
 }
 
 export function ReviewCard({ product, review }: ReviewProps) {
-  const { overview, key_features, performance, pros, cons, final_rating } = review
+  const { overview, price, key_features, performance, pros, cons, final_rating } = review
 
   return (
     <div className="bg-gray-800/80 rounded-xl p-5 shadow-lg border border-purple-500/20">
-      <h2 className="text-xl md:text-2xl font-bold text-transparent bg-gradient-to-r bg-clip-text from-pink-500 to-purple-500">
-        {product} Review
-      </h2>
+      <div className="flex justify-between items-start">
+        <h2 className="text-xl md:text-2xl font-bold text-transparent bg-gradient-to-r bg-clip-text from-pink-500 to-purple-500">
+          {product} Review
+        </h2>
+        
+        {price && (
+          <div className="bg-purple-600/20 px-3 py-1 rounded-full border border-purple-500/30">
+            <span className="font-semibold text-purple-300 text-sm md:text-base">
+              {price}
+            </span>
+          </div>
+        )}
+      </div>
 
       <p className="mt-3 text-gray-300 text-sm md:text-base">
         <strong className="text-purple-300">Overview:</strong> {overview}
@@ -105,9 +116,6 @@ export function ReviewCard({ product, review }: ReviewProps) {
           </ul>
         </div>
       </div>
-
-      <StarRating rating={final_rating} />
     </div>
   )
 }
-
