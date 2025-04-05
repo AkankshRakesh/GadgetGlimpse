@@ -21,15 +21,24 @@ GadgetGlimpse is a **TypeScript-based** smart shopping companion built using **N
 
   - State Management: React Context API
 
-- Backend
+- Chatbot
   - Runtime: Node.js
 
   - Framework: Express
 
-  - Containerization: Docker
-
   - API: RESTful architecture
-
+ 
+  - AI model- Mistral-7B-Instruct-v0.3 and Gemini-Star-2.0
+ 
+- WebScraper
+  - Runtime: Node.js
+ 
+  - Framework: Express
+ 
+  - Scraper: Puppeteer and userAgent
+ 
+  - contanerization: Docker
+ 
 - Development Tools
   - Linting: ESLint
 
