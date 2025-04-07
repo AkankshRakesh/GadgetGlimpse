@@ -16,22 +16,13 @@ app.use(express.json());
 const browserConfig = {
   headless: true,
   args: [
-    '--no-sandbox',
-    '--disable-setuid-sandbox',
-    '--disable-infobars',
-    '--window-position=0,0',
-    '--ignore-certifcate-errors',
-    '--ignore-certifcate-errors-spki-list',
-    '--disable-accelerated-2d-canvas',
-    '--disable-gpu',
-    '--disable-dev-shm-usage',
-    '--single-process'
+    '--disable-features=site-per-process',
   ],
   timeout: 120000, // Increase timeout to 60 seconds
 };
 
 // Helper function to get a random delay
-const getRandomDelay = () => Math.floor(Math.random() * (5000 - 2000 + 1) + 2000);
+const getRandomDelay = () => Math.floor(Math.random() * (5000 - 2000 + 1) + 2000); // 2-5 seconds
 
 // Function to delay execution
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -54,7 +45,12 @@ const scrapeAmazon = async (query, retries = 3) => {
     console.log(`Search URL: ${amazonSearchUrl}`);
 
     // Go to the search page
-    await page.goto(amazonSearchUrl, { waitUntil: 'networkidle2', timeout: 120000 });
+    try {
+      await page.goto(amazonSearchUrl, { waitUntil: ['domcontentloaded', 'networkidle2'], timeout: 3000000 });
+  } catch (error) {
+      console.error('Failed to navigate to the URL:', error);
+      // Handle the error (e.g., retry, log, etc.)
+  }
 
     // Check if the page was redirected (e.g., to a "Did you mean?" page)
     const currentUrl = page.url();
@@ -100,7 +96,7 @@ const scrapeAmazon = async (query, retries = 3) => {
     console.log(`Product URL: ${amazonLink}`);
 
     // Visit the product page
-    await page.goto(amazonLink, { waitUntil: 'networkidle2', timeout: 60000 });
+    await page.goto(amazonLink, { waitUntil: 'networkidle2', timeout: 120000 });
 
     // Check if the page was redirected to a search results page or captcha page
     const productPageUrl = page.url();
@@ -114,7 +110,7 @@ const scrapeAmazon = async (query, retries = 3) => {
     }
 
     // Wait for the product title to load
-    await page.waitForFunction(() => document.querySelector('#productTitle'), { timeout: 60000 });
+    await page.waitForFunction(() => document.querySelector('#productTitle'), { timeout: 120000 });
     await page.evaluate(async () => {
       // Scroll down to the Manufacturer section to trigger lazy-loading
       const manufacturerSection = document.querySelector('.aplus-module');
@@ -180,7 +176,7 @@ const scrapeAmazon = async (query, retries = 3) => {
 
 
     // Wait for the reviews section to load
-    await page.waitForSelector('.review', { timeout: 60000 });
+    await page.waitForSelector('.review', { timeout: 120000 });
 
     // Extract reviews with ratings
     // Extract reviews with a mix of positive and negative feedback
