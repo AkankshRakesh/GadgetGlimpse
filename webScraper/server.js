@@ -24,12 +24,14 @@ const browserConfig = {
     '--ignore-certifcate-errors-spki-list',
     '--disable-accelerated-2d-canvas',
     '--disable-gpu',
+    '--disable-dev-shm-usage',
+    '--single-process'
   ],
-  timeout: 60000, // Increase timeout to 60 seconds
+  timeout: 120000, // Increase timeout to 60 seconds
 };
 
 // Helper function to get a random delay
-const getRandomDelay = () => Math.floor(Math.random() * (3000 - 1000 + 1) + 1000);
+const getRandomDelay = () => Math.floor(Math.random() * (5000 - 2000 + 1) + 2000);
 
 // Function to delay execution
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -42,6 +44,8 @@ const scrapeAmazon = async (query, retries = 3) => {
   try {
     await page.setUserAgent(randomUseragent.getRandom());
     await page.setViewport({ width: 1920, height: 1080 });
+    await page.setJavaScriptEnabled(true);
+    await page.setDefaultNavigationTimeout(120000);
 
     // Encode the query for the URL
     const encodedQuery = encodeURIComponent(query);
@@ -50,7 +54,7 @@ const scrapeAmazon = async (query, retries = 3) => {
     console.log(`Search URL: ${amazonSearchUrl}`);
 
     // Go to the search page
-    await page.goto(amazonSearchUrl, { waitUntil: 'networkidle2', timeout: 60000 });
+    await page.goto(amazonSearchUrl, { waitUntil: 'networkidle2', timeout: 120000 });
 
     // Check if the page was redirected (e.g., to a "Did you mean?" page)
     const currentUrl = page.url();
@@ -73,15 +77,15 @@ const scrapeAmazon = async (query, retries = 3) => {
 
     // Get the first non-sponsored Amazon product link
     const amazonLink = await page.evaluate(() => {
-      const results = document.querySelectorAll('.s-main-slot .s-result-item');
+      const results = Array.from(document.querySelectorAll('.s-main-slot .s-result-item'))  ;
 
       for (const result of results) {
         // Skip sponsored products
         const isSponsored = result.querySelector('.s-sponsored-label') || result.innerText.includes('Sponsored');
         if (!isSponsored) {
           const link = result.querySelector('a.a-link-normal');
-          if (link) {
-            return link.href;
+          if (link && link.href.includes('/dp/')) {
+            return link.href.split('?')[0];
           }
         }
       }

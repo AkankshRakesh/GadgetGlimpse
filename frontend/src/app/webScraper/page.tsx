@@ -196,8 +196,8 @@ export default function App() {
                       type="text"
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
-                      placeholder="Enter product name..."
-                      className="w-full px-6 py-4 pr-14 text-white bg-gray-800 bg-opacity-80 rounded-xl border border-gray-700 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none shadow-sm text-lg transition-all placeholder-gray-400"
+                      placeholder="Search for smartphones, laptops, headphones..."
+                      className="w-full px-6 py-4 pr-14 text-white bg-gray-800 bg-opacity-80 rounded-xl border border-gray-700 focus:border-pink-500 focus:ring-4 focus:ring-pink-500/20 outline-none shadow-lg text-lg transition-all placeholder-gray-400"
                       aria-label="Product search input"
                     />
                     <motion.button
@@ -293,19 +293,38 @@ export default function App() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: "-100px" }}
                     transition={{ duration: 0.5, delay: index * 0.1 }}
-                    className="mt-8"
+                    className="mt-8 bg-gray-800/30 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50 shadow-xl"
                   >
                     <div className="absolute top-0 right-0 w-40 h-40 bg-purple-600/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
                     <div className="absolute bottom-0 left-0 w-40 h-40 bg-pink-600/10 rounded-full blur-3xl -ml-20 -mb-20 pointer-events-none"></div>
 
-                    <a
-                      href={result.amazonLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-500 hover:underline"
-                    >
-                      <h2 className="text-2xl font-semibold mb-4 ml-2 text-white">{result.title}</h2>
-                    </a>
+                    <div className="mb-6">
+                      <h2 className="text-2xl font-semibold mb-3 ml-2 text-white">{result.title}</h2>
+                      <a
+                        href={result.amazonLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-pink-700 hover:to-purple-700 transition-all shadow-lg shadow-purple-900/30 ml-2"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="lucide lucide-shopping-cart"
+                        >
+                          <circle cx="8" cy="21" r="1" />
+                          <circle cx="19" cy="21" r="1" />
+                          <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+                        </svg>
+                        View on Amazon
+                      </a>
+                    </div>
 
                     <div className="flex flex-wrap gap-4 items-center text-gray-300 mb-6">
                       <div className="flex items-center bg-gray-700/70 px-4 py-2 rounded-full shadow-sm border border-gray-600/50">
@@ -325,14 +344,17 @@ export default function App() {
                       <span className="bg-gradient-to-r from-pink-500 to-purple-500 w-1 h-6 rounded mr-3"></span>
                       Specifications
                     </h3>
-                    <div className="bg-gray-700/50 backdrop-blur-sm rounded-xl p-6 border border-gray-600/50 shadow-inner">
+                    <div className="bg-gray-700/30 backdrop-blur-sm rounded-xl p-6 border border-gray-600/50 shadow-inner">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {Object.entries(result.specifications).map(([key, value]) => (
-                          <div key={key} className="flex items-start space-x-2 group">
-                            <span className="text-gray-400 font-medium min-w-[120px] group-hover:text-purple-300 transition-colors">
+                          <div
+                            key={key}
+                            className="flex items-start space-x-2 group p-2 rounded-lg hover:bg-gray-700/50 transition-all duration-300"
+                          >
+                            <span className="text-purple-300 font-medium min-w-[120px] group-hover:text-pink-300 transition-colors">
                               {key}:
                             </span>
-                            <span className="text-gray-300 group-hover:text-white transition-colors">{value}</span>
+                            <span className="text-gray-200 group-hover:text-white transition-colors">{value}</span>
                           </div>
                         ))}
                       </div>
@@ -350,7 +372,7 @@ export default function App() {
                           whileInView={{ opacity: 1, y: 0 }}
                           viewport={{ once: true }}
                           transition={{ duration: 0.5, delay: reviewIndex * 0.05 }}
-                          className="bg-gray-800/40 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-700/50 hover:bg-gray-800/60 transition-all duration-300 group"
+                          className="bg-gray-800/40 backdrop-blur-sm rounded-xl p-6 shadow-lg border-l-4 border border-purple-500/50 hover:border-l-pink-500 hover:bg-gray-800/60 transition-all duration-300 group"
                         >
                           <div className="flex items-center mb-4">
                             <div className="flex items-center bg-gray-700/70 px-3 py-1 rounded-full border border-gray-600/50">
@@ -427,85 +449,113 @@ export default function App() {
 
       {/* Image Modal */}
       <AnimatePresence>
-  {selectedImage && (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm"
-      onClick={closeImageModal}
-    >
-      <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="relative max-w-5xl w-full max-h-[90vh] flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          className="absolute top-4 right-4 z-10 bg-black/50 backdrop-blur-sm p-2 rounded-full text-white hover:bg-black/70 transition-colors"
-          onClick={closeImageModal}
-        >
-          <X className="w-6 h-6" />
-        </button>
-
-        <div className="relative flex-1 overflow-hidden rounded-xl">
-          <img
-            src={selectedImage || "/placeholder.svg"}
-            alt="Product image"
-            className="w-full h-full object-contain max-h-[90vh] max-w-full"
-          />
-
-          <button
-            className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 backdrop-blur-sm p-3 rounded-full text-white hover:bg-black/70 transition-colors"
-            onClick={() => navigateImage("prev")}
+        {selectedImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm"
+            onClick={closeImageModal}
           >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="relative max-w-5xl w-full max-h-[90vh] flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                className="absolute top-4 right-4 z-10 bg-black/50 backdrop-blur-sm p-2 rounded-full text-white hover:bg-black/70 transition-colors"
+                onClick={closeImageModal}
+              >
+                <X className="w-6 h-6" />
+              </button>
 
-          <button
-            className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 backdrop-blur-sm p-3 rounded-full text-white hover:bg-black/70 transition-colors"
-            onClick={() => navigateImage("next")}
-          >
-            <ChevronRight className="w-6 h-6" />
-          </button>
-        </div>
+              <div className="relative flex-1 overflow-hidden rounded-xl">
+                <img
+                  src={selectedImage || "/placeholder.svg"}
+                  alt="Product image"
+                  className="w-full h-full object-contain max-h-[90vh] max-w-full"
+                />
 
-        {reviewData?.results[activeResultIndex]?.images && (
-          <div className="mt-4 overflow-x-auto pb-2">
-            <div className="flex space-x-2">
-              {reviewData.results[activeResultIndex].images.map((image, idx) => (
-                <div
-                  key={idx}
-                  className={`flex-shrink-0 w-20 h-20 rounded-md overflow-hidden cursor-pointer transition-all duration-300 ${
-                    idx === currentImageIndex
-                      ? "ring-2 ring-purple-500 scale-105"
-                      : "opacity-70 hover:opacity-100"
-                  }`}
-                  onClick={() => {
-                    setCurrentImageIndex(idx);
-                    setSelectedImage(image);
-                  }}
+                <button
+                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 backdrop-blur-sm p-3 rounded-full text-white hover:bg-black/70 transition-colors"
+                  onClick={() => navigateImage("prev")}
                 >
-                  <img
-                    src={image || "/placeholder.svg"}
-                    alt={`Thumbnail ${idx + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
 
-        <div className="mt-2 text-center text-white/80 text-sm">
-          {currentImageIndex + 1} / {reviewData?.results[activeResultIndex]?.images?.length || 0}
-        </div>
-      </motion.div>
-    </motion.div>
-  )}
-</AnimatePresence>
+                <button
+                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 backdrop-blur-sm p-3 rounded-full text-white hover:bg-black/70 transition-colors"
+                  onClick={() => navigateImage("next")}
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </div>
+
+              {reviewData?.results[activeResultIndex]?.images && (
+                <div className="mt-4 overflow-x-auto pb-2">
+                  <div className="flex space-x-2">
+                    {reviewData.results[activeResultIndex].images.map((image, idx) => (
+                      <div
+                        key={idx}
+                        className={`flex-shrink-0 w-20 h-20 rounded-md overflow-hidden cursor-pointer transition-all duration-300 ${
+                          idx === currentImageIndex
+                            ? "ring-2 ring-purple-500 scale-105"
+                            : "opacity-70 hover:opacity-100"
+                        }`}
+                        onClick={() => {
+                          setCurrentImageIndex(idx)
+                          setSelectedImage(image)
+                        }}
+                      >
+                        <img
+                          src={image || "/placeholder.svg"}
+                          alt={`Thumbnail ${idx + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="mt-2 text-center text-white/80 text-sm">
+                {currentImageIndex + 1} / {reviewData?.results[activeResultIndex]?.images?.length || 0}
+              </div>
+              {reviewData?.results[activeResultIndex]?.amazonLink && (
+                <div className="mt-4 bg-black/30 backdrop-blur-sm rounded-lg p-3 text-center">
+                  <a
+                    href={reviewData.results[activeResultIndex].amazonLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-pink-700 hover:to-purple-700 transition-all shadow-lg"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="lucide lucide-external-link"
+                    >
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                      <polyline points="15 3 21 3 21 9" />
+                      <line x1="10" y1="14" x2="21" y2="3" />
+                    </svg>
+                    Shop on Amazon
+                  </a>
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </main>
   )
 }
