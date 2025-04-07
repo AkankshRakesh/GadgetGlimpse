@@ -95,32 +95,26 @@ const scrapeAmazon = async (query, retries = 3) => {
 
     console.log(`Product URL: ${amazonLink}`);
 
-    // Visit the product page
     await page.goto(amazonLink, { waitUntil: 'networkidle2', timeout: 120000 });
 
-    // Check if the page was redirected to a search results page or captcha page
     const productPageUrl = page.url();
     if (productPageUrl.includes('/s?') || productPageUrl.includes('/errors/')) {
       if (retries > 0) {
         console.log('Redirected to search results or captcha page. Retrying...');
-        return scrapeAmazon(query, retries - 1); // Retry the search
+        return scrapeAmazon(query, retries - 1); 
       } else {
         throw new Error('Failed to navigate to the product page after multiple retries.');
       }
     }
 
-    // Wait for the product title to load
-    await page.waitForFunction(() => document.querySelector('#productTitle'), { timeout: 120000 });
+    await page.waitForFunction(() => document.querySelector('#productTitle'), { timeout: 60000 });
     await page.evaluate(async () => {
-      // Scroll down to the Manufacturer section to trigger lazy-loading
       const manufacturerSection = document.querySelector('.aplus-module');
       if (manufacturerSection) {
         manufacturerSection.scrollIntoView();
-        await new Promise(r => setTimeout(r, 2000)); // Wait for images to load
+        await new Promise(r => setTimeout(r, 2000)); 
       }
     });
-    // Extract product details
-    // Extract product details along with images
     const productDetails = await page.evaluate(() => {
       const titleElement = document.querySelector('#productTitle');
       const priceElement = document.querySelector('.a-price .a-offscreen');
@@ -131,9 +125,8 @@ const scrapeAmazon = async (query, retries = 3) => {
       const price = priceElement ? priceElement.textContent.trim() : 'No price found';
       const rating = ratingElement ? ratingElement.textContent.trim() : 'No rating found';
     
-      let images = new Set(); // Use Set to avoid duplicates
+      let images = new Set(); 
 
-  // ✅ Step 1: "From the Manufacturer" Images
   document.querySelectorAll('[data-a-dynamic-image]').forEach(element => {
     const dataImages = JSON.parse(element.getAttribute('data-a-dynamic-image'));
     Object.keys(dataImages).forEach(imgSrc => {
@@ -144,20 +137,17 @@ const scrapeAmazon = async (query, retries = 3) => {
   });
   document.querySelectorAll('.a-row img').forEach(img => {
     if (img.src.includes('https') && !img.src.includes('sprite') && !img.src.includes('icon') && !img.src.includes('badge') && !img.src.includes('logo')) {
-      images.add(img.src.replace(/_.*?\./, '_SL1500.')); // Force high resolution
+      images.add(img.src.replace(/_.*?\./, '_SL1500.')); 
     }
   });
 
-  // ✅ Step 2: Product Gallery High-Res Images
   document.querySelectorAll('#imgTagWrapperId img').forEach(img => {
     if (img.src.includes('https') && !img.src.includes('sprite') && !img.src.includes('icon') && !img.src.includes('badge') && !img.src.includes('logo')) {
       images.add(img.src.replace(/_.*?\./, '_SL1500.'));
     }
   });
 
-  // ✅ Step 3: Dynamic Amazon CDN High-Quality Images
 
-  // ✅ Step 4: Filter Out Low-Quality Images (Less than 800px width)
   let highQualityImages = Array.from(images).filter(img => img.includes("_SL1500"));
     
       const specifications = {};
@@ -175,11 +165,8 @@ const scrapeAmazon = async (query, retries = 3) => {
     
 
 
-    // Wait for the reviews section to load
     await page.waitForSelector('.review', { timeout: 120000 });
 
-    // Extract reviews with ratings
-    // Extract reviews with a mix of positive and negative feedback
 const reviews = await page.evaluate(() => {
   const reviewElements = document.querySelectorAll('.review');
   const reviews = [];
@@ -194,12 +181,10 @@ const reviews = await page.evaluate(() => {
     }
   });
 
-  // Sort reviews: prioritize a mix of good (4+) and bad (1-2) reviews
   const positiveReviews = reviews.filter(r => r.rating >= 4);
   const negativeReviews = reviews.filter(r => r.rating <= 2);
   const averageReviews = reviews.filter(r => r.rating === 3);
 
-  // Ensure the required mix of reviews
   const selectedReviews = [
     ...negativeReviews.slice(0, 2), // 2 bad reviews
     ...positiveReviews.slice(0, 2), // 2 good reviews
@@ -215,7 +200,7 @@ const reviews = await page.evaluate(() => {
     console.error('Error in scrapeAmazon:', error);
     if (retries > 0) {
       console.log(`Retrying... Attempts left: ${retries - 1}`);
-      return scrapeAmazon(query, retries - 1); // Retry the search
+      return scrapeAmazon(query, retries - 1); 
     } else {
       throw new Error(`Failed to scrape Amazon: ${error.message}`);
     }
@@ -245,7 +230,6 @@ app.get('/api/reviews', async (req, res) => {
   }
 });
 
-// Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ status: 'healthy' });
 });
