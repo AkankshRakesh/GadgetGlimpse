@@ -28,7 +28,41 @@ export default function App() {
     product?: string
     reply?: string
   }
+  const startListening = () => {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+  
+    if (!SpeechRecognition) {
+      alert("Speech Recognition not supported in this browser.");
+      return;
+    }
+  
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+  
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setInput(transcript); // Set the input with the speech text
+      console.log(transcript)
+    };
+  
+    recognition.onerror = (event: any) => {
+      if(event.error === "no-speech") {
+        alert("No speech detected. Please try again.");
 
+      }
+      
+      console.error("Speech recognition error:", event.error);
+    };
+    recognition.onend = () => {
+      console.log("Speech recognition ended.");
+    };
+  
+    recognition.start();
+  };
+  
   const formatBotResponse = (data: BotResponse) => {
     if (!data.review) return data.reply
     return <ReviewCard product={data.product || ""} review={data.review} />
@@ -149,6 +183,16 @@ export default function App() {
                 className="flex-1 px-4 py-2 bg-transparent text-white rounded-lg outline-none text-sm md:text-base placeholder-gray-400"
                 placeholder="Type a product name..."
               />
+              <motion.button
+    whileHover={{ scale: 1.05 }}
+    whileTap={{ scale: 0.95 }}
+    onClick={startListening}
+    disabled={loading}
+    className="p-2 bg-gradient-to-r from-purple-600 to-purple-700 rounded-lg hover:opacity-90 disabled:opacity-50 shadow-md"
+    title="Speak"
+  >
+    🎤
+  </motion.button>
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
