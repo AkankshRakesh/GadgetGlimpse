@@ -1,20 +1,34 @@
 "use client"
 import type React from "react"
 import { useEffect, useRef, useState } from "react"
-import { Bot, Loader2, ArrowLeft, Send } from "lucide-react"
+import { Bot, Loader2, ArrowLeft, Send, Mic } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import { ReviewCard } from "./review-card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 export default function App() {
   const [messages, setMessages] = useState<{ text: string | React.JSX.Element; type: "user" | "bot" }[]>([])
   const [input, setInput] = useState("")
   const [loading, setLoading] = useState(false)
+  const [isListening, setIsListening] = useState(false)
   const chatEndRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [messages])
+    // Show welcome message on first load
+    if (messages.length === 0) {
+      setMessages([
+        {
+          type: "bot",
+          text: "👋 Welcome to GadgetGlimpse! I can provide detailed reviews for any tech product. Just type a product name like 'iPhone 15 Pro' or 'Sony WH-1000XM5' and I'll generate a comprehensive review for you.",
+        },
+      ])
+    }
+  }, [])
+
 
   interface BotResponse {
     review?: {
@@ -28,45 +42,75 @@ export default function App() {
     product?: string
     reply?: string
   }
-  const startListening = () => {
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-  
-    if (!SpeechRecognition) {
-      alert("Speech Recognition not supported in this browser.");
-      return;
-    }
-  
-    const recognition = new SpeechRecognition();
-    recognition.lang = "en-US";
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-  
-    recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript;
-      setInput(transcript); // Set the input with the speech text
-      console.log(transcript)
-    };
-  
-    recognition.onerror = (event: any) => {
-      if(event.error === "no-speech") {
-        alert("No speech detected. Please try again.");
+  const handleGetSavedReview = () => {
+    const saved = localStorage.getItem("savedReviews");
+    if (!saved) return;
 
-      }
-      
-      console.error("Speech recognition error:", event.error);
-    };
-    recognition.onend = () => {
-      console.log("Speech recognition ended.");
-    };
-  
-    recognition.start();
+    const parsed = JSON.parse(saved);
+    const formatted = formatBotResponse(parsed);
+    setMessages((prev) => [...prev, { type: "bot", text: formatted || "No saved review found." }]);
   };
   
-  const formatBotResponse = (data: BotResponse) => {
-    if (!data.review) return data.reply
-    return <ReviewCard product={data.product || ""} review={data.review} />
+  const startListening = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+
+    if (!SpeechRecognition) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          text: "Speech recognition is not supported in your browser. Please try using Chrome, Edge, or Safari.",
+          type: "bot",
+        },
+      ])
+      return
+    }
+
+    const recognition = new SpeechRecognition()
+    recognition.lang = "en-US"
+    recognition.interimResults = false
+    recognition.maxAlternatives = 1
+
+    setIsListening(true)
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript
+      setInput(transcript)
+      setIsListening(false)
+    }
+
+    recognition.onerror = (event: any) => {
+      setIsListening(false)
+      if (event.error === "no-speech") {
+        setMessages((prev) => [
+          ...prev,
+          {
+            text: "I couldn't hear anything. Please try speaking again or type your query.",
+            type: "bot",
+          },
+        ])
+      } else {
+        console.error("Speech recognition error:", event.error)
+      }
+    }
+
+    recognition.onend = () => {
+      setIsListening(false)
+    }
+
+    recognition.start()
   }
+
+  const formatBotResponse = (data: BotResponse | BotResponse[]) => {
+    if (Array.isArray(data)) {
+      const first = data[0];
+      if (!first.review) return first.reply;
+      return <ReviewCard product={first.product || ""} review={first.review} />;
+    } else {
+      if (!data.review) return data.reply;
+      return <ReviewCard product={data.product || ""} review={data.review} />;
+    }
+  };
+  
 
   const handleSend = async () => {
     if (!input.trim()) return
@@ -86,16 +130,38 @@ export default function App() {
       setMessages((prev) => [...prev, { text: formattedResponse || "No response available.", type: "bot" }])
     } catch (error) {
       console.log(error)
-      setMessages((prev) => [...prev, { text: "Error fetching response. Try again.", type: "bot" }])
+      setMessages((prev) => [
+        ...prev,
+        { text: "Error fetching response. Please check your connection and try again.", type: "bot" },
+      ])
     } finally {
       setLoading(false)
+      // Focus the input after sending
+      inputRef.current?.focus()
     }
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault()
+      handleSend()
+    }
+  }
+
+  const clearChat = () => {
+    setMessages([
+      {
+        type: "bot",
+        text: "Chat cleared! What product would you like me to review next?",
+      },
+    ])
+  }
+
   return (
-    <main className="min-h-screen bg-gradient-to-b from-purple-950 to-black flex items-center justify-center">
-      <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8">
-      <motion.nav 
+    <TooltipProvider>
+      <main className="h-screen overflow-y-hidden bg-gradient-to-b from-purple-950 to-black w-full">
+        <div className="w-full h-full px-4 py-8">
+        <motion.nav 
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5 }}
@@ -113,7 +179,33 @@ export default function App() {
               </span>
             </Link>
           </motion.div>
-          
+          <div className="flex items-center gap-2">
+          <Tooltip>
+  <TooltipTrigger asChild>
+    <Button
+      variant="outline"
+      onClick={handleGetSavedReview}
+      className="hidden cursor-pointer md:flex items-center gap-1 px-6 py-2.5 rounded-full text-gray-900 hover:text-gray-600 border-gray-700 hover:border-gray-500"
+    >
+      Get Saved Review
+    </Button>
+  </TooltipTrigger>
+  <TooltipContent>Retrieve the last saved review</TooltipContent>
+</Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="destructive"
+                    size="default"
+                    onClick={clearChat}
+                    className="hidden cursor-pointer md:flex items-center gap-1 px-6 py-2.5 rounded-full text-gray-300 hover:text-white border-gray-700 hover:border-gray-500"
+                  >
+                    Clear Chat
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Start a new conversation</TooltipContent>
+              </Tooltip>
           <motion.div 
             whileHover={{ scale: 1.05 }}
             transition={{ type: "spring", stiffness: 400, damping: 10 }}
@@ -127,86 +219,110 @@ export default function App() {
               Back Home
             </Link>
           </motion.div>
+          </div>
         </motion.nav>
 
-        <div className="w-full text-white flex flex-col items-center justify-center">
-          <motion.div
-            initial={{ y: -20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            className="w-full rounded-xl shadow-2xl bg-gray-900/50 backdrop-blur-sm p-4 md:p-6 flex flex-col h-[75vh] border border-gray-700/50"
-          >
-            <div className="mb-4 text-center">
-              <p className="text-gray-300 text-sm md:text-base font-medium">
-                Mention the product name, and let the bot do the rest!
-              </p>
-            </div>
+          <div className="w-full text-white flex flex-col items-center justify-center">
+            <motion.div
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              className="w-full max-w-7xl mx-auto rounded-xl shadow-2xl bg-gray-900/50 backdrop-blur-sm p-4 md:p-6 flex flex-col h-[75vh] border border-gray-700/50"
+            >
+              <div className="mb-4 text-center">
+                <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 mb-1">
+                  Product Review Assistant
+                </h1>
+                <p className="text-gray-300 text-sm md:text-base">
+                  Ask about any tech product to get a detailed review
+                </p>
+              </div>
 
-            <div className="flex-1 overflow-y-auto space-y-4 p-3 border border-gray-700/50 rounded-lg bg-gray-800/30 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
-              <AnimatePresence>
-                {messages.map((msg, index) => (
+              <div className="flex-1 overflow-y-auto space-y-4 p-3 border border-gray-700/50 rounded-lg bg-gray-800/30 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
+                <AnimatePresence>
+                  {messages.map((msg, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className={` rounded-lg max-w-[85%] text-sm md:text-base whitespace-pre-line shadow-md ${
+                        msg.type === "user"
+                          ? "bg-gradient-to-r from-blue-600 to-blue-700 ml-auto"
+                          : (msg.text == "👋 Welcome to GadgetGlimpse! I can provide detailed reviews for any tech product. Just type a product name like 'iPhone 15 Pro' or 'Sony WH-1000XM5' and I'll generate a comprehensive review for you." || msg.text == "Chat cleared! What product would you like me to review next?") ? "p-3 bg-gradient-to-r from-gray-700 to-gray-800" : "bg-gradient-to-r from-gray-700 to-gray-800"
+                      }`}
+                    >
+                      {msg.text}
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+                {loading && (
                   <motion.div
-                    key={index}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    className={`p-3 rounded-lg max-w-[85%] text-sm md:text-base whitespace-pre-line shadow-md ${
-                      msg.type === "user"
-                        ? "bg-gradient-to-r from-blue-600 to-blue-700 ml-auto"
-                        : "bg-gradient-to-r from-gray-700 to-gray-800"
-                    }`}
+                    className="self-start bg-gray-700 p-3 rounded-lg flex items-center space-x-2"
                   >
-                    {msg.text}
+                    <Loader2 className="w-5 h-5 animate-spin text-purple-400" />
+                    <span className="text-gray-300 text-sm">Generating review...</span>
                   </motion.div>
-                ))}
-              </AnimatePresence>
-              {loading && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="self-start bg-gray-700 p-3 rounded-lg flex items-center space-x-2"
-                >
-                  <Loader2 className="w-5 h-5 animate-spin text-purple-400" />
-                  <span className="text-gray-300 text-sm">Generating review...</span>
-                </motion.div>
-              )}
+                )}
 
-              <div ref={chatEndRef} />
-            </div>
+                <div ref={chatEndRef} />
+              </div>
 
-            <div className="flex items-center mt-4 bg-gray-800/50 p-2 rounded-lg border border-gray-700/50">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                className="flex-1 px-4 py-2 bg-transparent text-white rounded-lg outline-none text-sm md:text-base placeholder-gray-400"
-                placeholder="Type a product name..."
-              />
-              <motion.button
-    whileHover={{ scale: 1.05 }}
-    whileTap={{ scale: 0.95 }}
-    onClick={startListening}
-    disabled={loading}
-    className="p-2 bg-gradient-to-r from-purple-600 to-purple-700 rounded-lg hover:opacity-90 disabled:opacity-50 shadow-md"
-    title="Speak"
-  >
-    🎤
-  </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleSend}
-                disabled={loading}
-                className="ml-2 p-2 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg hover:opacity-90 disabled:opacity-50 shadow-md"
-              >
-                <Send className="w-5 h-5" />
-              </motion.button>
-            </div>
-          </motion.div>
+              <div className="flex items-center mt-4 bg-gray-800/50 p-2 rounded-lg border border-gray-700/50">
+                <Input
+                  ref={inputRef}
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  className="flex-1 px-4 py-2 bg-transparent text-white border-0 focus-visible:ring-1 focus-visible:ring-purple-500 text-sm md:text-base placeholder-gray-400"
+                  placeholder="Type a product name (e.g., MacBook Pro M3)..."
+                  aria-label="Product name input"
+                  disabled={loading}
+                />
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      onClick={startListening}
+                      disabled={loading || isListening}
+                      variant="outline"
+                      size="icon"
+                      className="ml-2 cursor-pointer bg-gradient-to-r from-purple-600 to-purple-700 text-white border-0 hover:opacity-90 disabled:opacity-50"
+                      aria-label="Use voice input"
+                    >
+                      <Mic className={`w-5 h-5 ${isListening ? "animate-pulse text-red-400" : ""}`} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{isListening ? "Listening..." : "Speak product name"}</TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      onClick={handleSend}
+                      disabled={loading || !input.trim()}
+                      variant="outline"
+                      size="icon"
+                      className="ml-2 cursor-pointer bg-gradient-to-r from-blue-600 to-blue-700 text-white border-0 hover:opacity-90 disabled:opacity-50"
+                      aria-label="Send message"
+                    >
+                      <Send className="w-5 h-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Send</TooltipContent>
+                </Tooltip>
+              </div>
+
+              <div className="mt-2 text-center text-xs text-gray-400">Press Enter to send • ESC to clear input</div>
+            </motion.div>
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </TooltipProvider>
   )
 }
-

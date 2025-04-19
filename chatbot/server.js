@@ -27,7 +27,7 @@ async function generateWithGemini(productName) {
           "overview": "Brief product introduction",
           "price": "Price in INR",
           "key_features": ["Feature 1", "Feature 2", ...],
-          "performance": {"Criteria1":"Explanation1", "Criteria2":"Explanation2", ...},
+          "performance": {"Criteria1":["performance in criteria in %","Explanation1"], "Criteria2":["performance in criteria in %","Explanation2"], ...},
           "pros": ["Pro 1", "Pro 2", ...],
           "cons": ["Con 1", "Con 2", ...],
           "final_rating": "0-5 rating"
