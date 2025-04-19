@@ -248,7 +248,7 @@ export default function App() {
                       exit={{ opacity: 0 }}
                       className={` rounded-lg max-w-[85%] text-sm md:text-base whitespace-pre-line shadow-md ${
                         msg.type === "user"
-                          ? "bg-gradient-to-r from-blue-600 to-blue-700 ml-auto"
+                          ? "p-3 bg-gradient-to-r from-blue-600 to-blue-700 ml-auto"
                           : (msg.text == "👋 Welcome to GadgetGlimpse! I can provide detailed reviews for any tech product. Just type a product name like 'iPhone 15 Pro' or 'Sony WH-1000XM5' and I'll generate a comprehensive review for you." || msg.text == "Chat cleared! What product would you like me to review next?") ? "p-3 bg-gradient-to-r from-gray-700 to-gray-800" : "bg-gradient-to-r from-gray-700 to-gray-800"
                       }`}
                     >
@@ -319,8 +319,23 @@ export default function App() {
               </div>
 
               <div className="mt-2 text-center text-xs text-gray-400">Press Enter to send • ESC to clear input</div>
+              
+        <Tooltip>
+  <TooltipTrigger asChild>
+    <Button
+      variant="outline"
+      onClick={handleGetSavedReview}
+      className="cursor-pointer md:hidden items-center gap-1 px-6 py-2.5 rounded-full text-gray-900 hover:text-gray-600 border-gray-700 hover:border-gray-500"
+    >
+      Get Saved Review
+    </Button>
+  </TooltipTrigger>
+  <TooltipContent>Retrieve the last saved review</TooltipContent>
+</Tooltip>
             </motion.div>
+            
           </div>
+          
         </div>
       </main>
     </TooltipProvider>
