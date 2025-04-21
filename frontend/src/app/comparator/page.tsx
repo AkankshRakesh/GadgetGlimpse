@@ -224,27 +224,103 @@ export default function ProductComparison() {
       console.error("Error sharing:", err)
     }
   }
-
+  const copyComparison = async () => {
+    if (!comparison) return
+  
+    try {
+      // Format the comparison data as text
+      let comparisonText = `Comparison between ${comparison.product1} and ${comparison.product2}\n\n`
+      
+      // Add ratings
+      comparisonText += `Ratings:\n`
+      comparisonText += `${comparison.product1}: ${comparison.comparison.ratings.product1}/5\n`
+      comparisonText += `${comparison.product2}: ${comparison.comparison.ratings.product2}/5\n\n`
+      
+      // Add recommendations
+      comparisonText += `Recommendations:\n`
+      comparisonText += `${comparison.product1}: ${comparison.comparison.final_recommendation_product1}\n`
+      comparisonText += `${comparison.product2}: ${comparison.comparison.final_recommendation_product2}\n\n`
+      
+      // Add overview
+      comparisonText += `Overview:\n${comparison.comparison.overview}\n\n`
+      
+      // Add price
+      comparisonText += `Price Comparison:\n${comparison.comparison.price}\n\n`
+      
+      // Add key features
+      comparisonText += `Key Features:\n`
+      comparison.comparison.key_features.forEach(feature => {
+        comparisonText += `- ${feature}\n`
+      })
+      comparisonText += `\n`
+      
+      // Add performance
+      comparisonText += `Performance Comparison:\n`
+      Object.entries(comparison.comparison.performance).forEach(([metric, details]) => {
+        comparisonText += `${metric}:\n`
+        comparisonText += `${comparison.product1}: ${details[0]}\n`
+        comparisonText += `${comparison.product2}: ${details[1]}\n\n`
+      })
+      
+      // Add pros
+      comparisonText += `Pros:\n`
+      comparison.comparison.pros.forEach(pro => {
+        comparisonText += `- ${pro}\n`
+      })
+      comparisonText += `\n`
+      
+      // Add cons
+      comparisonText += `Cons:\n`
+      comparison.comparison.cons.forEach(con => {
+        comparisonText += `- ${con}\n`
+      })
+  
+      // Copy to clipboard
+      await navigator.clipboard.writeText(comparisonText)
+      
+      // Show success message
+      const button = document.getElementById('copy-comparison-button')
+      if (button) {
+        const originalText = button.textContent
+        button.textContent = 'Copied!'
+        setTimeout(() => {
+          if (button) button.textContent = originalText
+        }, 2000)
+      }
+    } catch (err) {
+      console.error("Error copying comparison:", err)
+      alert("Failed to copy comparison. Please try again.")
+    }
+  }
   return (
     <TooltipProvider>
+      
       <main className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-950 text-white">
-        <div className="container mx-auto px-3 sm:px-4 py-6 md:py-8 max-w-6xl">
-          {/* Header */}
-          <motion.header
-            initial={{ y: -20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            className="flex flex-col md:flex-row justify-between items-center mb-6 md:mb-8"
+        
+        <div className="container mx-auto px-3 sm:px-4 py-6 md:py-8 max-w-7xl">
+          <motion.nav 
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="flex justify-center lg:justify-between items-center mb-8"
+        >
+          <motion.div 
+            whileHover={{ scale: 1.05 }}
+            transition={{ type: "spring", stiffness: 400, damping: 10 }}
+            className="flex items-center space-x-3"
           >
-            <Link href="/" className="flex items-center gap-2 group mb-4 md:mb-0">
-              <Bot className="w-6 h-6 md:w-8 md:h-8 text-purple-400" />
-              <h1 className="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400">
-                GadgetGlimpse <span className="text-white/70">Compare</span>
-              </h1>
+            <Link href="/" className="flex items-center space-x-3">
+              <Bot className="w-16 h-16 lg:w-8 lg:h-8 text-pink-500" />
+              <span className="text-2xl lg:text-xl mt-2 lg:mt-1 font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-purple-500">
+                GadgetGlimpse
+              </span>
             </Link>
-            <div className="flex items-center gap-2">
-              <Button
+          </motion.div>
+          <div className="hidden lg:flex items-center gap-2">
+          <Button
                 variant="outline"
-                className="cursor-pointer border-gray-600 hover:bg-gray-800 text-sm md:text-base px-2 md:px-4"
+                size="lg"
+                className="cursor-pointer border-gray-600 rounded-full hover:bg-gray-800 text-base px-6 py-2.5"
                 onClick={() => {
                   setProduct1("")
                   setProduct2("")
@@ -253,15 +329,21 @@ export default function ProductComparison() {
               >
                 Reset
               </Button>
-              <Link href="/choice">
-                <Button className="cursor-pointer bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-sm md:text-base px-2 md:px-4">
-                  <ArrowLeft className="mr-1 md:mr-2 w-3 h-3 md:w-4 md:h-4" />
-                  Back
-                </Button>
-              </Link>
-            </div>
-          </motion.header>
-
+          <motion.div 
+            whileHover={{ scale: 1.05 }}
+            transition={{ type: "spring", stiffness: 400, damping: 10 }}
+            className="hidden lg:block"
+          >
+            <Link
+              href="/choice"
+              className="group bg-gradient-to-r from-purple-700 to-pink-700 text-white px-6 py-2.5 rounded-full hover:opacity-90 transition-all duration-300 shadow-lg inline-flex items-center"
+            >
+              <ArrowLeft className="mr-2 w-4 h-4 transition-transform group-hover:-translate-x-1" />
+              Back
+            </Link>
+          </motion.div>
+          </div>
+        </motion.nav>
           {/* Input Section */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -398,7 +480,7 @@ export default function ProductComparison() {
                   <Button
                     key={index}
                     variant="outline"
-                    className="justify-start border-gray-700 hover:border-purple-500 hover:bg-gray-700/50 h-auto py-2 md:py-3 text-xs md:text-sm"
+                    className="cursor-pointer justify-start border-gray-700 hover:border-purple-500 hover:bg-gray-700/50 h-auto py-2 md:py-3 text-xs md:text-sm"
                     onClick={() => {
                       setProduct1(item.product1)
                       setProduct2(item.product2)
@@ -472,31 +554,31 @@ export default function ProductComparison() {
                 </div>
 
                 {/* Share Button */}
-                <div className="flex justify-end mb-4">
-                  <Button
-                    variant="outline"
-                    onClick={shareComparison}
-                    className="cursor-pointer border-gray-700 hover:border-purple-500 hover:bg-gray-800 text-gray-300"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="mr-2"
-                    >
-                      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
-                      <polyline points="16 6 12 2 8 6"></polyline>
-                      <line x1="12" y1="2" x2="12" y2="15"></line>
-                    </svg>
-                    Share Comparison
-                  </Button>
-                </div>
+                <div className="flex justify-end mb-4 gap-2">
+  <Button
+    variant="outline"
+    onClick={copyComparison}
+    id="copy-comparison-button"
+    className="cursor-pointer border-gray-700 hover:border-purple-500 hover:bg-gray-800 text-gray-300"
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="mr-2"
+    >
+      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+    </svg>
+    Copy Comparison
+  </Button>
+</div>
 
                 {/* Tabs Navigation */}
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

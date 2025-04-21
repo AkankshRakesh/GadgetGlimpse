@@ -185,7 +185,7 @@ export default function App() {
     <Button
       variant="outline"
       onClick={handleGetSavedReview}
-      className="hidden cursor-pointer md:flex items-center gap-1 px-6 py-2.5 rounded-full text-gray-900 hover:text-gray-600 border-gray-700 hover:border-gray-500"
+      className="hidden bg-gray-400 cursor-pointer md:flex items-center gap-1 px-6 py-2.5 rounded-full text-gray-900 hover:text-gray-600 border-gray-700 hover:border-gray-500"
     >
       Get Saved Review
     </Button>
@@ -212,11 +212,11 @@ export default function App() {
             className="hidden lg:block"
           >
             <Link
-              href="/"
+              href="/choice"
               className="group bg-gradient-to-r from-purple-700 to-pink-700 text-white px-6 py-2.5 rounded-full hover:opacity-90 transition-all duration-300 shadow-lg inline-flex items-center"
             >
               <ArrowLeft className="mr-2 w-4 h-4 transition-transform group-hover:-translate-x-1" />
-              Back Home
+              Back
             </Link>
           </motion.div>
           </div>
