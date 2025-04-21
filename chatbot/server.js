@@ -141,7 +141,9 @@ app.post('/api/compare_products', async (req, res) => {
             \"ratings\": {
               \"product1\": \"Rating out of 5 (e.g., 3.5)\",
               \"product2\": \"Rating out of 5 (e.g., 4.2)\"
-            }
+            },
+            \"final_recommendation_product1\": \"A single word on how much it is recommendated\",
+            \"final_recommendation_product2\": \"A single word on how much it is recommendated\"
           }
 
           Important requirements:

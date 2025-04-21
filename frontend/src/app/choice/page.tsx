@@ -3,7 +3,7 @@
 import type React from "react"
 
 import Link from "next/link"
-import { Bot, ArrowRight, ArrowLeft, Sparkles, Globe } from "lucide-react"
+import { Bot, ArrowRight, ArrowLeft, Sparkles, Globe, Replace } from "lucide-react"
 import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 
@@ -93,7 +93,7 @@ export default function ChooseTool() {
           initial="initial"
           whileInView="animate"
           viewport={{ once: true, margin: "-100px" }}
-          className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto px-4"
+          className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto px-4"
         >
           <OptionCard
             href="/webScraper"
@@ -110,6 +110,16 @@ export default function ChooseTool() {
             title="Chatbot"
             description="Engage with our AI-powered assistant for instant help and information on any topic."
             icon={<Sparkles className="w-6 h-6" />}
+            gradient="from-pink-600 to-purple-800"
+            hoverGradient="from-pink-500 to-purple-700"
+            delay={0.5}
+            featured={true}
+          />
+          <OptionCard
+            href="/comparator"
+            title="Product Comparator"
+            description="Let our AI-powered assistant help you compare products and make informed decisions."
+            icon={<Replace className="w-6 h-6" />}
             gradient="from-pink-600 to-purple-800"
             hoverGradient="from-pink-500 to-purple-700"
             delay={0.5}

@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import {
   Bot,
   Loader2,
@@ -38,6 +38,8 @@ interface ComparisonData {
     product1: string
     product2: string
   }
+  final_recommendation_product1: string
+  final_recommendation_product2: string
 }
 
 export default function ProductComparison() {
@@ -52,6 +54,64 @@ export default function ProductComparison() {
   const [error, setError] = useState("")
   const [activeTab, setActiveTab] = useState("overview")
   const inputRef = useRef<HTMLInputElement>(null)
+  const [suggestions1, setSuggestions1] = useState<string[]>([])
+  const [suggestions2, setSuggestions2] = useState<string[]>([])
+  const [showSuggestions1, setShowSuggestions1] = useState(false)
+  const [showSuggestions2, setShowSuggestions2] = useState(false)
+  const [recentComparisons, setRecentComparisons] = useState<Array<{ product1: string; product2: string }>>([
+    { product1: "iPhone 15 Pro", product2: "Samsung Galaxy S23" },
+    { product1: "MacBook Pro", product2: "Dell XPS 13" },
+    { product1: "Sony WH-1000XM5", product2: "Bose QuietComfort" },
+  ])
+  const [showScrollTop, setShowScrollTop] = useState(false)
+
+  // Add this near the top of the component
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+
+    checkIfMobile()
+    window.addEventListener("resize", checkIfMobile)
+
+    return () => {
+      window.removeEventListener("resize", checkIfMobile)
+    }
+  }, [])
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 500)
+    }
+
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
+
+  const handleProductInput = async (
+    value: string,
+    setProduct: React.Dispatch<React.SetStateAction<string>>,
+    setSuggestions: React.Dispatch<React.SetStateAction<string[]>>,
+    setShowSuggestions: React.Dispatch<React.SetStateAction<boolean>>,
+  ) => {
+    setProduct(value)
+
+    if (value.trim().length > 2) {
+      try {
+        // Mock suggestions - in a real app, you would fetch from an API
+        const mockSuggestions = [`${value} Pro`, `${value} Max`, `${value} Ultra`, `${value} Plus`, `${value} Mini`]
+        setSuggestions(mockSuggestions)
+        setShowSuggestions(true)
+      } catch (err) {
+        console.error("Failed to fetch suggestions", err)
+      }
+    } else {
+      setSuggestions([])
+      setShowSuggestions(false)
+    }
+  }
 
   const fetchComparison = async () => {
     if (!product1.trim() || !product2.trim()) {
@@ -79,6 +139,19 @@ export default function ProductComparison() {
           product1: product1,
           product2: product2,
           comparison: data.comparison,
+        })
+        // Save to recent comparisons if not already there
+        setRecentComparisons((prev) => {
+          const newComparison = { product1, product2 }
+          const exists = prev.some(
+            (item) =>
+              (item.product1 === product1 && item.product2 === product2) ||
+              (item.product1 === product2 && item.product2 === product1),
+          )
+          if (!exists) {
+            return [newComparison, ...prev].slice(0, 5) // Keep only the 5 most recent
+          }
+          return prev
         })
         setActiveTab("overview")
       } else {
@@ -132,26 +205,46 @@ export default function ProductComparison() {
     )
   }
 
+  const shareComparison = async () => {
+    if (!comparison) return
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `${comparison.product1} vs ${comparison.product2} Comparison`,
+          text: `Check out this comparison between ${comparison.product1} and ${comparison.product2}!`,
+          url: window.location.href,
+        })
+      } else {
+        // Fallback for browsers that don't support the Web Share API
+        navigator.clipboard.writeText(window.location.href)
+        alert("Link copied to clipboard!")
+      }
+    } catch (err) {
+      console.error("Error sharing:", err)
+    }
+  }
+
   return (
     <TooltipProvider>
       <main className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-950 text-white">
-        <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <div className="container mx-auto px-3 sm:px-4 py-6 md:py-8 max-w-6xl">
           {/* Header */}
           <motion.header
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="flex flex-col md:flex-row justify-between items-center mb-8"
+            className="flex flex-col md:flex-row justify-between items-center mb-6 md:mb-8"
           >
             <Link href="/" className="flex items-center gap-2 group mb-4 md:mb-0">
-              <Bot className="w-8 h-8 text-purple-400" />
-              <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400">
+              <Bot className="w-6 h-6 md:w-8 md:h-8 text-purple-400" />
+              <h1 className="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400">
                 GadgetGlimpse <span className="text-white/70">Compare</span>
               </h1>
             </Link>
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
-                className="border-gray-600 hover:bg-gray-800"
+                className="cursor-pointer border-gray-600 hover:bg-gray-800 text-sm md:text-base px-2 md:px-4"
                 onClick={() => {
                   setProduct1("")
                   setProduct2("")
@@ -160,10 +253,10 @@ export default function ProductComparison() {
               >
                 Reset
               </Button>
-              <Link href="/review">
-                <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90">
-                  <ArrowLeft className="mr-2 w-4 h-4" />
-                  Single Review
+              <Link href="/choice">
+                <Button className="cursor-pointer bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-sm md:text-base px-2 md:px-4">
+                  <ArrowLeft className="mr-1 md:mr-2 w-3 h-3 md:w-4 md:h-4" />
+                  Back
                 </Button>
               </Link>
             </div>
@@ -173,31 +266,53 @@ export default function ProductComparison() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="bg-gray-800/50 p-6 rounded-xl border border-gray-700 mb-8 backdrop-blur-sm"
+            className="bg-gray-800/50 p-4 md:p-6 rounded-xl border border-gray-700 mb-6 md:mb-8 backdrop-blur-sm"
           >
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              <Scale className="text-purple-400" />
+            <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4 flex items-center gap-2">
+              <Scale className="text-purple-400 w-4 h-4 md:w-5 md:h-5" />
               Compare Two Products
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div className="space-y-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-4">
+              <div className="space-y-2 relative">
                 <label className="block text-sm font-medium text-gray-300">Product 1</label>
                 <div className="flex gap-2">
-                  <Input
-                    ref={inputRef}
-                    value={product1}
-                    onChange={(e) => setProduct1(e.target.value)}
-                    placeholder="e.g., iPhone 15 Pro"
-                    className="bg-gray-700 border-gray-600 focus:border-purple-500 focus:ring-purple-500"
-                  />
+                  <div className="relative flex-1">
+                    <Input
+                      ref={inputRef}
+                      value={product1}
+                      onChange={(e) =>
+                        handleProductInput(e.target.value, setProduct1, setSuggestions1, setShowSuggestions1)
+                      }
+                      onFocus={() => product1.trim().length > 2 && setShowSuggestions1(true)}
+                      onBlur={() => setTimeout(() => setShowSuggestions1(false), 200)}
+                      placeholder="e.g., iPhone 15 Pro"
+                      className="bg-gray-700 border-gray-600 focus:border-purple-500 focus:ring-purple-500"
+                    />
+                    {showSuggestions1 && suggestions1.length > 0 && (
+                      <div className="absolute z-10 mt-1 w-full bg-gray-800 border border-gray-700 rounded-md shadow-lg max-h-40 md:max-h-60 overflow-auto">
+                        {suggestions1.map((suggestion, index) => (
+                          <div
+                            key={index}
+                            className="px-3 md:px-4 py-1.5 md:py-2 hover:bg-gray-700 cursor-pointer text-xs md:text-sm"
+                            onClick={() => {
+                              setProduct1(suggestion)
+                              setShowSuggestions1(false)
+                            }}
+                          >
+                            {suggestion}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
                         variant="outline"
                         size="icon"
                         onClick={() => startListening(setProduct1)}
-                        className="border-gray-600 hover:border-purple-500 hover:bg-gray-700"
+                        className=" cursor-pointer border-gray-600 hover:border-purple-500 hover:bg-gray-700"
                       >
                         <Mic className="w-4 h-4" />
                       </Button>
@@ -207,22 +322,44 @@ export default function ProductComparison() {
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2 relative">
                 <label className="block text-sm font-medium text-gray-300">Product 2</label>
                 <div className="flex gap-2">
-                  <Input
-                    value={product2}
-                    onChange={(e) => setProduct2(e.target.value)}
-                    placeholder="e.g., Samsung Galaxy S23"
-                    className="bg-gray-700 border-gray-600 focus:border-purple-500 focus:ring-purple-500"
-                  />
+                  <div className="relative flex-1">
+                    <Input
+                      value={product2}
+                      onChange={(e) =>
+                        handleProductInput(e.target.value, setProduct2, setSuggestions2, setShowSuggestions2)
+                      }
+                      onFocus={() => product2.trim().length > 2 && setShowSuggestions2(true)}
+                      onBlur={() => setTimeout(() => setShowSuggestions2(false), 200)}
+                      placeholder="e.g., Samsung Galaxy S23"
+                      className="bg-gray-700 border-gray-600 focus:border-purple-500 focus:ring-purple-500"
+                    />
+                    {showSuggestions2 && suggestions2.length > 0 && (
+                      <div className="absolute z-10 mt-1 w-full bg-gray-800 border border-gray-700 rounded-md shadow-lg max-h-40 md:max-h-60 overflow-auto">
+                        {suggestions2.map((suggestion, index) => (
+                          <div
+                            key={index}
+                            className="px-3 md:px-4 py-1.5 md:py-2 hover:bg-gray-700 cursor-pointer text-xs md:text-sm"
+                            onClick={() => {
+                              setProduct2(suggestion)
+                              setShowSuggestions2(false)
+                            }}
+                          >
+                            {suggestion}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
                         variant="outline"
                         size="icon"
                         onClick={() => startListening(setProduct2)}
-                        className="border-gray-600 hover:border-purple-500 hover:bg-gray-700"
+                        className="cursor-pointer border-gray-600 hover:border-purple-500 hover:bg-gray-700"
                       >
                         <Mic className="w-4 h-4" />
                       </Button>
@@ -242,19 +379,63 @@ export default function ProductComparison() {
             <Button
               onClick={fetchComparison}
               disabled={loading || !product1.trim() || !product2.trim()}
-              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:opacity-90 transition-all duration-300 transform hover:scale-[1.01]"
+              className="cursor-pointer w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:opacity-90 transition-all duration-300 transform hover:scale-[1.01]"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ChevronsRight className="w-4 h-4 mr-2" />}
               Generate Comparison
             </Button>
           </motion.div>
 
+          {!loading && !comparison && recentComparisons.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-gray-800/30 p-4 md:p-6 rounded-xl border border-gray-700 mb-6 md:mb-8"
+            >
+              <h3 className="text-base md:text-lg font-medium mb-3 md:mb-4 text-gray-300">Recent Comparisons</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
+                {recentComparisons.map((item, index) => (
+                  <Button
+                    key={index}
+                    variant="outline"
+                    className="justify-start border-gray-700 hover:border-purple-500 hover:bg-gray-700/50 h-auto py-2 md:py-3 text-xs md:text-sm"
+                    onClick={() => {
+                      setProduct1(item.product1)
+                      setProduct2(item.product2)
+                    }}
+                  >
+                    <div className="flex flex-col items-start text-left">
+                      <span className="text-purple-400 truncate max-w-[120px] sm:max-w-[150px] md:max-w-full">
+                        {item.product1}
+                      </span>
+                      <span className="text-xs text-gray-400">vs</span>
+                      <span className="text-blue-400 truncate max-w-[120px] sm:max-w-[150px] md:max-w-full">
+                        {item.product2}
+                      </span>
+                    </div>
+                  </Button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
           {/* Loading State */}
           {loading && (
-            <div className="flex flex-col items-center justify-center py-12">
-              <Loader2 className="w-10 h-10 animate-spin text-purple-400 mb-4" />
-              <p className="text-gray-400">Analyzing products and generating comparison...</p>
-            </div>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 py-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {[1, 2].map((i) => (
+                  <div key={i} className="bg-gray-800/50 border border-gray-700 rounded-xl overflow-hidden">
+                    <div className="h-2 bg-gray-700 animate-pulse"></div>
+                    <div className="p-6 space-y-4">
+                      <div className="h-6 bg-gray-700 rounded animate-pulse w-3/4"></div>
+                      <div className="h-4 bg-gray-700 rounded animate-pulse w-1/2"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="h-10 bg-gray-800/70 rounded-lg animate-pulse"></div>
+              <div className="h-64 bg-gray-800/50 border border-gray-700 rounded-xl animate-pulse"></div>
+            </motion.div>
           )}
 
           {/* Results Section */}
@@ -269,7 +450,7 @@ export default function ProductComparison() {
                       <CardTitle className="flex justify-between items-center">
                         <span>{comparison.product1}</span>
                         <Badge variant="outline" className="bg-purple-900/30 text-purple-300 border-purple-700">
-                          {comparison.comparison.ratings.product1}/5
+                          Recommendation: {comparison.comparison.final_recommendation_product1}
                         </Badge>
                       </CardTitle>
                     </CardHeader>
@@ -282,7 +463,7 @@ export default function ProductComparison() {
                       <CardTitle className="flex justify-between items-center">
                         <span>{comparison.product2}</span>
                         <Badge variant="outline" className="bg-blue-900/30 text-blue-300 border-blue-700">
-                          {comparison.comparison.ratings.product2}/5
+                        Recommendation: {comparison.comparison.final_recommendation_product2}
                         </Badge>
                       </CardTitle>
                     </CardHeader>
@@ -290,45 +471,72 @@ export default function ProductComparison() {
                   </Card>
                 </div>
 
+                {/* Share Button */}
+                <div className="flex justify-end mb-4">
+                  <Button
+                    variant="outline"
+                    onClick={shareComparison}
+                    className="cursor-pointer border-gray-700 hover:border-purple-500 hover:bg-gray-800 text-gray-300"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="mr-2"
+                    >
+                      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                      <polyline points="16 6 12 2 8 6"></polyline>
+                      <line x1="12" y1="2" x2="12" y2="15"></line>
+                    </svg>
+                    Share Comparison
+                  </Button>
+                </div>
+
                 {/* Tabs Navigation */}
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                  <TabsList className="grid grid-cols-2 md:grid-cols-5 w-full bg-gray-800/70 p-1">
+                  <TabsList className="grid grid-cols-5 h-full w-full bg-gray-800/70 p-1 overflow-x-auto">
                     <TabsTrigger
                       value="overview"
-                      className="data-[state=active]:bg-purple-600/30 data-[state=active]:text-purple-200"
+                      className="cursor-pointer data-[state=active]:bg-purple-600/30 data-[state=active]:text-purple-200 px-2 md:px-4 py-1 md:py-2 text-xs md:text-sm"
                     >
-                      <Info className="w-4 h-4 mr-2" />
+                      <Info className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
                       <span className="hidden md:inline">Overview</span>
                     </TabsTrigger>
                     <TabsTrigger
                       value="price"
-                      className="data-[state=active]:bg-purple-600/30 data-[state=active]:text-purple-200"
+                      className="cursor-pointer data-[state=active]:bg-purple-600/30 data-[state=active]:text-purple-200 px-2 md:px-4 py-1 md:py-2 text-xs md:text-sm"
                     >
-                      <DollarSign className="w-4 h-4 mr-2" />
+                      <DollarSign className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
                       <span className="hidden md:inline">Price</span>
                     </TabsTrigger>
                     <TabsTrigger
                       value="features"
-                      className="data-[state=active]:bg-purple-600/30 data-[state=active]:text-purple-200"
+                      className="cursor-pointer data-[state=active]:bg-purple-600/30 data-[state=active]:text-purple-200 px-2 md:px-4 py-1 md:py-2 text-xs md:text-sm"
                     >
-                      <ListChecks className="w-4 h-4 mr-2" />
+                      <ListChecks className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
                       <span className="hidden md:inline">Features</span>
                     </TabsTrigger>
                     <TabsTrigger
                       value="performance"
-                      className="data-[state=active]:bg-purple-600/30 data-[state=active]:text-purple-200"
+                      className="cursor-pointer data-[state=active]:bg-purple-600/30 data-[state=active]:text-purple-200 px-2 md:px-4 py-1 md:py-2 text-xs md:text-sm"
                     >
-                      <BarChart3 className="w-4 h-4 mr-2" />
+                      <BarChart3 className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
                       <span className="hidden md:inline">Performance</span>
                     </TabsTrigger>
                     <TabsTrigger
                       value="pros-cons"
-                      className="data-[state=active]:bg-purple-600/30 data-[state=active]:text-purple-200"
+                      className="cursor-pointer data-[state=active]:bg-purple-600/30 data-[state=active]:text-purple-200 px-2 md:px-4 py-1 md:py-2 text-xs md:text-sm"
                     >
                       <div className="flex items-center">
-                        <ThumbsUp className="w-3 h-3" />
-                        <span className="mx-1">/</span>
-                        <ThumbsDown className="w-3 h-3" />
+                        <ThumbsUp className="w-2 h-2 md:w-3 md:h-3" />
+                        <span className="mx-0.5 md:mx-1">/</span>
+                        <ThumbsDown className="w-2 h-2 md:w-3 md:h-3" />
                       </div>
                       <span className="hidden md:inline ml-2">Pros & Cons</span>
                     </TabsTrigger>
@@ -348,13 +556,17 @@ export default function ProductComparison() {
                       </CardHeader>
                       <CardContent>
                         <div className="prose prose-invert max-w-none">
-                          <p className="text-gray-300 leading-relaxed">{comparison.comparison.overview}</p>
+                          <p className="text-sm md:text-base text-gray-300 leading-relaxed">
+                            {comparison.comparison.overview}
+                          </p>
                         </div>
 
-                        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="bg-gray-700/30 rounded-lg p-4 border border-gray-700">
-                            <h4 className="font-medium mb-3 text-purple-300">{comparison.product1}</h4>
-                            <div className="space-y-4">
+                        <div className="mt-6 md:mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                          <div className="bg-gray-700/30 rounded-lg p-3 md:p-4 border border-gray-700">
+                            <h4 className="text-sm md:text-base font-medium mb-2 md:mb-3 text-purple-300">
+                              {comparison.product1}
+                            </h4>
+                            <div className="space-y-3 md:space-y-4">
                               <div>
                                 <div className="flex justify-between mb-1">
                                   <span className="text-xs text-gray-400">Rating</span>
@@ -364,7 +576,7 @@ export default function ProductComparison() {
                                 </div>
                                 <Progress
                                   value={Number.parseInt(comparison.comparison.ratings.product1) * 20}
-                                  className="h-2 bg-gray-700"
+                                  className="h-1.5 md:h-2 bg-gray-700"
                                 >
                                   <div className="h-full bg-gradient-to-r from-purple-500 to-purple-700 rounded-full" />
                                 </Progress>
@@ -372,9 +584,11 @@ export default function ProductComparison() {
                             </div>
                           </div>
 
-                          <div className="bg-gray-700/30 rounded-lg p-4 border border-gray-700">
-                            <h4 className="font-medium mb-3 text-blue-300">{comparison.product2}</h4>
-                            <div className="space-y-4">
+                          <div className="bg-gray-700/30 rounded-lg p-3 md:p-4 border border-gray-700">
+                            <h4 className="text-sm md:text-base font-medium mb-2 md:mb-3 text-blue-300">
+                              {comparison.product2}
+                            </h4>
+                            <div className="space-y-3 md:space-y-4">
                               <div>
                                 <div className="flex justify-between mb-1">
                                   <span className="text-xs text-gray-400">Rating</span>
@@ -384,7 +598,7 @@ export default function ProductComparison() {
                                 </div>
                                 <Progress
                                   value={Number.parseInt(comparison.comparison.ratings.product2) * 20}
-                                  className="h-2 bg-gray-700"
+                                  className="h-1.5 md:h-2 bg-gray-700"
                                 >
                                   <div className="h-full bg-gradient-to-r from-blue-500 to-blue-700 rounded-full" />
                                 </Progress>
@@ -466,15 +680,19 @@ export default function ProductComparison() {
                               <AccordionTrigger className="hover:text-purple-300 py-4">
                                 <span className="font-medium">{metric}</span>
                               </AccordionTrigger>
-                              <AccordionContent className="pt-2 pb-4">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <div className="bg-purple-900/20 border border-purple-800/50 rounded-lg p-4">
-                                    <h5 className="text-sm font-medium text-purple-300 mb-2">{comparison.product1}</h5>
-                                    <p className="text-sm text-gray-300">{details[0]}</p>
+                              <AccordionContent className="pt-1 md:pt-2 pb-3 md:pb-4">
+                                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+                                  <div className="bg-purple-900/20 border border-purple-800/50 rounded-lg p-3 md:p-4">
+                                    <h5 className="text-xs md:text-sm font-medium text-purple-300 mb-1 md:mb-2">
+                                      {comparison.product1}
+                                    </h5>
+                                    <p className="text-xs md:text-sm text-gray-300">{details[0]}</p>
                                   </div>
-                                  <div className="bg-blue-900/20 border border-blue-800/50 rounded-lg p-4">
-                                    <h5 className="text-sm font-medium text-blue-300 mb-2">{comparison.product2}</h5>
-                                    <p className="text-sm text-gray-300">{details[1]}</p>
+                                  <div className="bg-blue-900/20 border border-blue-800/50 rounded-lg p-3 md:p-4">
+                                    <h5 className="text-xs md:text-sm font-medium text-blue-300 mb-1 md:mb-2">
+                                      {comparison.product2}
+                                    </h5>
+                                    <p className="text-xs md:text-sm text-gray-300">{details[1]}</p>
                                   </div>
                                 </div>
                               </AccordionContent>
@@ -499,14 +717,14 @@ export default function ProductComparison() {
                           <CardDescription className="text-gray-400">Strengths of these products</CardDescription>
                         </CardHeader>
                         <CardContent>
-                          <ul className="space-y-3">
+                          <ul className="space-y-2 md:space-y-3">
                             {comparison.comparison.pros.map((pro, i) => (
                               <li
                                 key={i}
-                                className="flex items-start bg-green-900/20 p-3 rounded-lg border border-green-800/30"
+                                className="flex items-start bg-green-900/20 p-2 md:p-3 rounded-lg border border-green-800/30"
                               >
-                                <span className="text-green-400 mr-2 mt-0.5">✓</span>
-                                <span className="text-gray-300">{pro}</span>
+                                <span className="text-green-400 mr-2 mt-0.5 text-xs md:text-base">✓</span>
+                                <span className="text-gray-300 text-xs md:text-sm">{pro}</span>
                               </li>
                             ))}
                           </ul>
@@ -524,14 +742,14 @@ export default function ProductComparison() {
                           <CardDescription className="text-gray-400">Weaknesses to consider</CardDescription>
                         </CardHeader>
                         <CardContent>
-                          <ul className="space-y-3">
+                          <ul className="space-y-2 md:space-y-3">
                             {comparison.comparison.cons.map((con, i) => (
                               <li
                                 key={i}
-                                className="flex items-start bg-red-900/20 p-3 rounded-lg border border-red-800/30"
+                                className="flex items-start bg-red-900/20 p-2 md:p-3 rounded-lg border border-red-800/30"
                               >
-                                <span className="text-red-400 mr-2 mt-0.5">✗</span>
-                                <span className="text-gray-300">{con}</span>
+                                <span className="text-red-400 mr-2 mt-0.5 text-xs md:text-base">✗</span>
+                                <span className="text-gray-300 text-xs md:text-sm">{con}</span>
                               </li>
                             ))}
                           </ul>
@@ -544,6 +762,33 @@ export default function ProductComparison() {
             )}
           </AnimatePresence>
         </div>
+        {/* Scroll to top button */}
+        <AnimatePresence>
+          {showScrollTop && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              className="fixed bottom-4 md:bottom-6 right-4 md:right-6 p-2 md:p-3 rounded-full bg-purple-600 text-white shadow-lg hover:bg-purple-700 transition-colors z-50"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-4 h-4 md:w-5 md:h-5"
+              >
+                <polyline points="18 15 12 9 6 15"></polyline>
+              </svg>
+            </motion.button>
+          )}
+        </AnimatePresence>
       </main>
     </TooltipProvider>
   )
