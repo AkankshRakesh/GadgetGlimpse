@@ -191,7 +191,7 @@ const reviews = await page.evaluate(() => {
     ...averageReviews.slice(0, 1),  // 1 average review
   ];
 
-  return selectedReviews.length > 0 ? selectedReviews : reviews.slice(0, 5);
+  return reviews.slice(0, 5);
 });
 
 

@@ -135,7 +135,6 @@ export default function App() {
     setCurrentImageIndex(newIndex)
     setSelectedImage(images[newIndex])
   }
-
   return (
     <main className="min-h-screen bg-gradient-to-b from-purple-950 to-black text-white">
       <div className="container mx-auto px-4 lg:px-8 py-8 md:py-12">
