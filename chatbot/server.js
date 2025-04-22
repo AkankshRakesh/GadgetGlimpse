@@ -109,20 +109,20 @@ app.post('/api/compare_products', async (req, res) => {
           The JSON should include these exact fields with this structure:
           {
             \"overview\": \"A concise 2-3 sentence comparison highlighting the main differences\",
-            \"price\": \"Detailed price comparison including price difference and value analysis\",
+            \"priceShort\": {
+              \"product1\":\"Price in INR for product1\",
+              \"product2\":\"Price in INR for product2\"
+            },
+            \"price\": \"Detailed price comparison in Indian Rupees including price difference and value analysis\",
             \"key_features\": [
               \"Comparison of feature 1 (how they differ)\",
               \"Comparison of feature 2 (how they differ)\",
-              \"Comparison of feature 3 (how they differ)\",
-              \"Comparison of feature 4 (how they differ)\",
-              \"Comparison of feature 5 (how they differ)\"
+              \"Comparison of feature 3 (how they differ)\",...
             ],
             \"performance\": {
-              \"Speed\": [\"Product 1 performance\", \"Product 2 performance\", \"Detailed comparison analysis\"],
-              \"Display Quality\": [\"Product 1 performance\", \"Product 2 performance\", \"Detailed comparison analysis\"],
-              \"Battery Life\": [\"Product 1 performance\", \"Product 2 performance\", \"Detailed comparison analysis\"],
-              \"Camera Quality\": [\"Product 1 performance\", \"Product 2 performance\", \"Detailed comparison analysis\"],
-              \"Build Quality\": [\"Product 1 performance\", \"Product 2 performance\", \"Detailed comparison analysis\"]
+              \"Criteria1\": [\"Product 1 performance\", \"Product 2 performance\", \"Detailed comparison analysis\"],
+              \"Criteria2\": [\"Product 1 performance\", \"Product 2 performance\", \"Detailed comparison analysis\"],
+              \"Criteria3\": [\"Product 1 performance\", \"Product 2 performance\", \"Detailed comparison analysis\"],...
             },
             \"pros\": [
               \"Product 1 advantage 1\",
@@ -142,8 +142,8 @@ app.post('/api/compare_products', async (req, res) => {
               \"product1\": \"Rating out of 5 (e.g., 3.5)\",
               \"product2\": \"Rating out of 5 (e.g., 4.2)\"
             },
-            \"final_recommendation_product1\": \"A single word on how much it is recommendated\",
-            \"final_recommendation_product2\": \"A single word on how much it is recommendated\"
+            \"final_recommendation_product1\": \"A single word on how much it is recommendated, keep it different from product2 always\",
+            \"final_recommendation_product2\": \"A single word on how much it is recommendated, keep it different from product1 always\"
           }
 
           Important requirements:

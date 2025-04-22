@@ -29,6 +29,10 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 
 interface ComparisonData {
   overview: string
+  priceShort: {
+    product1: string
+    product2: string
+  }
   price: string
   key_features: string[]
   performance: Record<string, string[]>
@@ -524,36 +528,60 @@ export default function ProductComparison() {
           <AnimatePresence>
             {comparison && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
-                {/* Product Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card className="bg-gray-800/50 border-gray-700 overflow-hidden">
-                    <div className="h-2 bg-gradient-to-r from-purple-500 to-purple-700"></div>
-                    <CardHeader>
-                      <CardTitle className="flex justify-between items-center">
-                        <span>{comparison.product1}</span>
-                        <Badge variant="outline" className="bg-purple-900/30 text-purple-300 border-purple-700">
-                          Recommendation: {comparison.comparison.final_recommendation_product1}
-                        </Badge>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>{renderStars(comparison.comparison.ratings.product1)}</CardContent>
-                  </Card>
+  {/* Product 1 Card */}
+  <Card className="bg-gray-800/50 border-gray-700 overflow-hidden">
+    <div className="h-2 bg-gradient-to-r from-purple-500 to-purple-700"></div>
+    <CardHeader>
+      <CardTitle className="flex justify-between items-center">
+        <span>{comparison.product1}</span>
+        <Badge variant="outline" className="bg-purple-900/30 text-purple-300 border-purple-700">
+          Recommendation: {comparison.comparison.final_recommendation_product1}
+        </Badge>
+      </CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="flex items-center gap-3">
+        <div className="bg-purple-900/20 p-3 rounded-lg border border-purple-800/50">
+          <DollarSign className="text-purple-400 w-5 h-5" />
+        </div>
+        <div>
+          <p className="text-sm text-gray-400">Price</p>
+          <p className="text-xl font-bold text-purple-200">
+            {comparison.comparison.priceShort.product1}
+          </p>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
 
-                  <Card className="bg-gray-800/50 border-gray-700 overflow-hidden">
-                    <div className="h-2 bg-gradient-to-r from-blue-500 to-blue-700"></div>
-                    <CardHeader>
-                      <CardTitle className="flex justify-between items-center">
-                        <span>{comparison.product2}</span>
-                        <Badge variant="outline" className="bg-blue-900/30 text-blue-300 border-blue-700">
-                        Recommendation: {comparison.comparison.final_recommendation_product2}
-                        </Badge>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>{renderStars(comparison.comparison.ratings.product2)}</CardContent>
-                  </Card>
-                </div>
+  {/* Product 2 Card */}
+  <Card className="bg-gray-800/50 border-gray-700 overflow-hidden">
+    <div className="h-2 bg-gradient-to-r from-blue-500 to-blue-700"></div>
+    <CardHeader>
+      <CardTitle className="flex justify-between items-center">
+        <span>{comparison.product2}</span>
+        <Badge variant="outline" className="bg-blue-900/30 text-blue-300 border-blue-700">
+          Recommendation: {comparison.comparison.final_recommendation_product2}
+        </Badge>
+      </CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="flex items-center gap-3">
+        <div className="bg-blue-900/20 p-3 rounded-lg border border-blue-800/50">
+          <DollarSign className="text-blue-400 w-5 h-5" />
+        </div>
+        <div>
+          <p className="text-sm text-gray-400">Price</p>
+          <p className="text-xl font-bold text-blue-200">
+            {comparison.comparison.priceShort.product2}
+          </p>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+</div>
 
-                {/* Share Button */}
                 <div className="flex justify-end mb-4 gap-2">
   <Button
     variant="outline"
@@ -759,7 +787,7 @@ export default function ProductComparison() {
                               value={`item-${index}`}
                               className="border-b border-gray-700 last:border-0"
                             >
-                              <AccordionTrigger className="hover:text-purple-300 py-4">
+                              <AccordionTrigger className="cursor-pointer hover:text-purple-300 py-4">
                                 <span className="font-medium">{metric}</span>
                               </AccordionTrigger>
                               <AccordionContent className="pt-1 md:pt-2 pb-3 md:pb-4">
