@@ -138,7 +138,7 @@ export default function App() {
   }
   return (
     <main className="min-h-screen bg-gradient-to-b from-purple-950 to-black text-white">
-      <div className="container mx-auto px-4 lg:px-8 py-8 md:py-12">
+      <div className="container mx-auto px-4 py-6 md:py-8">
         <motion.nav
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -164,11 +164,11 @@ export default function App() {
             className="hidden lg:block"
           >
             <Link
-              href="/"
+              href="/choice"
               className="group bg-gradient-to-r from-purple-700 to-pink-700 text-white px-6 py-2.5 rounded-full hover:opacity-90 transition-all duration-300 shadow-lg inline-flex items-center"
             >
               <ArrowLeft className="mr-2 w-4 h-4 transition-transform group-hover:-translate-x-1" />
-              Back Home
+              Back
             </Link>
           </motion.div>
         </motion.nav>

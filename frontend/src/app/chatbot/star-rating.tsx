@@ -26,7 +26,6 @@ export function StarRating({
   const hasAlmostFullStar = rating % 1 > 0.7
   const emptyStars = 5 - fullStars - (hasHalfStar || hasAlmostFullStar ? 1 : 0)
 
-  // Size mappings
   const sizeClasses = {
     sm: "w-4 h-4",
     md: "w-5 h-5",
@@ -36,10 +35,8 @@ export function StarRating({
   const starSize = sizeClasses[size]
   const containerSize = size === "sm" ? "h-6" : size === "md" ? "h-8" : "h-10"
 
-  // Format rating for display
   const displayRating = rating
 
-  // Handle interactive rating
   const handleStarClick = (index: number) => {
     if (interactive && onChange) {
       onChange(index + 1)
