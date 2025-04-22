@@ -1,7 +1,7 @@
 "use client"
 import type React from "react"
 import { useEffect, useRef, useState } from "react"
-import { Bot, Loader2, ArrowLeft, Send, Mic } from "lucide-react"
+import { Bot, Loader2, ArrowLeft, Send, Mic, Webhook } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import { ReviewCard } from "./review-card"
@@ -18,7 +18,6 @@ export default function App() {
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    // Show welcome message on first load
     if (messages.length === 0) {
       setMessages([
         {
@@ -136,7 +135,6 @@ export default function App() {
       ])
     } finally {
       setLoading(false)
-      // Focus the input after sending
       inputRef.current?.focus()
     }
   }
@@ -173,7 +171,7 @@ export default function App() {
             className="flex items-center space-x-3"
           >
             <Link href="/" className="flex items-center space-x-3">
-              <Bot className="w-16 h-16 lg:w-8 lg:h-8 text-pink-500" />
+            <Webhook className="w-16 h-16 lg:w-8 lg:h-8 text-pink-500" />
               <span className="text-2xl lg:text-xl mt-2 lg:mt-1 font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-purple-500">
                 GadgetGlimpse
               </span>

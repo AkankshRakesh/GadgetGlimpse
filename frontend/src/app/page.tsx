@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Bot, Star, ShoppingBag, ArrowRight, Sparkles } from "lucide-react"
+import { Bot, Star, ShoppingBag, ArrowRight, Sparkles, Webhook } from "lucide-react"
 import { motion } from "framer-motion"
 import { useEffect, useState } from "react"
 
@@ -34,7 +34,7 @@ export default function Home() {
       top: `${Math.random() * 100}%`,
     }));
     setBackgroundShapes(newShapes);
-  }, []); // Runs once on the client
+  }, []);
   return (
     <div className="min-h-screen overflow-hidden">
       {/* Hero Section with improved background */}
@@ -80,7 +80,7 @@ export default function Home() {
             <motion.div whileHover={{ scale: 1.05 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
               <Link href="/" className="flex items-center space-x-3">
                 <div className="relative">
-                  <Bot className="w-16 h-16 lg:w-8 lg:h-8 text-pink-500" />
+                  <Webhook className="w-16 h-16 lg:w-8 lg:h-8 text-pink-500" />
                   <motion.div
                     className="absolute -inset-1 rounded-full bg-pink-500/20 blur-sm"
                     animate={{ scale: [1, 1.4, 1] }}

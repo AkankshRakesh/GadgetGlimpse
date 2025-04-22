@@ -47,7 +47,7 @@ export function ReviewCard({ product, review }: ReviewProps) {
   }
 
   const getPerformanceScore = (value: string): number => {
-    return Math.min(Math.max(parseInt(value), 0), 100) // Ensure value is between 0 and 100
+    return Math.min(Math.max(parseInt(value), 0), 100) 
   }
 
   const handleSaveReview = () => {

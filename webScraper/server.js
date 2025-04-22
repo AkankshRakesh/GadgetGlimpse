@@ -1,10 +1,10 @@
 const express = require('express');
-const puppeteer = require('puppeteer-extra'); // Use puppeteer-extra
+const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 const randomUseragent = require('random-useragent');
 const cors = require('cors');
 
-puppeteer.use(StealthPlugin()); // Use the StealthPlugin
+puppeteer.use(StealthPlugin()); 
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -12,22 +12,18 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// Browser configuration
 const browserConfig = {
   headless: true,
   args: [
     '--disable-features=site-per-process',
   ],
-  timeout: 120000, // Increase timeout to 60 seconds
+  timeout: 120000,
 };
 
-// Helper function to get a random delay
 const getRandomDelay = () => Math.floor(Math.random() * (5000 - 2000 + 1) + 2000); // 2-5 seconds
 
-// Function to delay execution
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Scraper for Amazon to get product details and reviews
 const scrapeAmazon = async (query, retries = 3) => {
   const browser = await puppeteer.launch(browserConfig);
   const page = await browser.newPage();
@@ -38,26 +34,21 @@ const scrapeAmazon = async (query, retries = 3) => {
     await page.setJavaScriptEnabled(true);
     await page.setDefaultNavigationTimeout(120000);
 
-    // Encode the query for the URL
     const encodedQuery = encodeURIComponent(query);
     const amazonSearchUrl = `https://www.amazon.in/s?k=${encodedQuery}&i=electronics`;
 
     console.log(`Search URL: ${amazonSearchUrl}`);
 
-    // Go to the search page
     try {
       await page.goto(amazonSearchUrl, { waitUntil: ['domcontentloaded', 'networkidle2'], timeout: 3000000 });
   } catch (error) {
       console.error('Failed to navigate to the URL:', error);
-      // Handle the error (e.g., retry, log, etc.)
   }
 
-    // Check if the page was redirected (e.g., to a "Did you mean?" page)
     const currentUrl = page.url();
     if (!currentUrl.includes('/s?')) {
       console.log('Redirected to a different page. Trying to handle it...');
 
-      // Extract the corrected query (if available)
       const correctedQuery = await page.evaluate(() => {
         const correctionElement = document.querySelector('.a-spacing-small .a-color-state');
         return correctionElement ? correctionElement.textContent.trim() : null;
@@ -65,18 +56,16 @@ const scrapeAmazon = async (query, retries = 3) => {
 
       if (correctedQuery) {
         console.log(`Corrected query: ${correctedQuery}`);
-        return scrapeAmazon(correctedQuery, retries); // Retry with the corrected query
+        return scrapeAmazon(correctedQuery, retries); 
       }
     }
 
     await delay(getRandomDelay());
 
-    // Get the first non-sponsored Amazon product link
     const amazonLink = await page.evaluate(() => {
       const results = Array.from(document.querySelectorAll('.s-main-slot .s-result-item'))  ;
 
       for (const result of results) {
-        // Skip sponsored products
         const isSponsored = result.querySelector('.s-sponsored-label') || result.innerText.includes('Sponsored');
         if (!isSponsored) {
           const link = result.querySelector('a.a-link-normal');
@@ -86,7 +75,7 @@ const scrapeAmazon = async (query, retries = 3) => {
         }
       }
 
-      return null; // No non-sponsored product found
+      return null; 
     });
 
     if (!amazonLink) {
@@ -130,7 +119,7 @@ const scrapeAmazon = async (query, retries = 3) => {
   document.querySelectorAll('[data-a-dynamic-image]').forEach(element => {
     const dataImages = JSON.parse(element.getAttribute('data-a-dynamic-image'));
     Object.keys(dataImages).forEach(imgSrc => {
-      if (imgSrc.includes('https') && dataImages[imgSrc] > 100000 && !img.src.includes('sprite') && !imgSrc.includes('icon') && !imgSrc.includes('badge') && !imgSrc.includes('logo')) { // Only keep large images
+      if (imgSrc.includes('https') && dataImages[imgSrc] > 100000 && !img.src.includes('sprite') && !imgSrc.includes('icon') && !imgSrc.includes('badge') && !imgSrc.includes('logo')) {
         images.add(imgSrc.replace(/_.*?\./, '_SL1500.'));
       }
     });
@@ -209,7 +198,6 @@ const reviews = await page.evaluate(() => {
   }
 };
 
-// Main review fetching endpoint
 app.get('/api/reviews', async (req, res) => {
   const { query } = req.query;
 

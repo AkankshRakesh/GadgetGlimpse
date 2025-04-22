@@ -12,6 +12,7 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  Webhook,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
@@ -150,7 +151,7 @@ export default function App() {
             className="flex items-center space-x-3"
           >
             <Link href="/" className="flex items-center space-x-3">
-              <Bot className="w-16 h-16 lg:w-8 lg:h-8 text-pink-500" />
+              <Webhook className="w-16 h-16 lg:w-8 lg:h-8 text-pink-500" />
               <span className="text-2xl lg:text-xl mt-2 lg:mt-1 font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-purple-500">
                 GadgetGlimpse
               </span>

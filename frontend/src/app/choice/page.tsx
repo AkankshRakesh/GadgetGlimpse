@@ -3,7 +3,7 @@
 import type React from "react"
 
 import Link from "next/link"
-import { Bot, ArrowRight, ArrowLeft, Sparkles, Globe, Replace } from "lucide-react"
+import { Bot, ArrowRight, ArrowLeft, Sparkles, Globe, Replace, Webhook } from "lucide-react"
 import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 
@@ -42,7 +42,7 @@ export default function ChooseTool() {
             className="flex items-center space-x-3"
           >
             <Link href="/" className="flex items-center space-x-3">
-              <Bot className="w-16 h-16 lg:w-8 lg:h-8 text-pink-500" />
+              <Webhook className="w-16 h-16 lg:w-8 lg:h-8 text-pink-500" />
               <span className="text-2xl lg:text-xl mt-2 lg:mt-1 font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-purple-500">
                 GadgetGlimpse
               </span>

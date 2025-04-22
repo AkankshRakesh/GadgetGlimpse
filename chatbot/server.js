@@ -113,6 +113,10 @@ app.post('/api/compare_products', async (req, res) => {
               \"product1\":\"Price in INR for product1\",
               \"product2\":\"Price in INR for product2\"
             },
+            \"bestFor\": {
+              \"product1\":\"Best for "Best for what kind of users"\",
+              \"product2\":\"Best for "Best for what kind of users"\"
+            },
             \"price\": \"Detailed price comparison in Indian Rupees including price difference and value analysis\",
             \"key_features\": [
               \"Comparison of feature 1 (how they differ)\",
@@ -162,7 +166,6 @@ app.post('/api/compare_products', async (req, res) => {
           Return ONLY the raw JSON without any markdown formatting or additional text.`;
 
   try {
-    // Try Gemini first
     const comparison = await generateWithGemini(prompt);
     return res.json({
       product1: product1,
@@ -172,7 +175,6 @@ app.post('/api/compare_products', async (req, res) => {
   } catch (error) {
     console.error("Gemini comparison failed, trying Mistral:", error);
     try {
-      // Fallback to Mistral
       const comparison = await generateWithMistral(prompt);
       return res.json({
         product1: product1,

@@ -15,6 +15,7 @@ import {
   ListChecks,
   ThumbsUp,
   ThumbsDown,
+  Webhook,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
@@ -22,7 +23,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
@@ -30,6 +31,10 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 interface ComparisonData {
   overview: string
   priceShort: {
+    product1: string
+    product2: string
+  }
+  bestFor: {
     product1: string
     product2: string
   }
@@ -69,7 +74,6 @@ export default function ProductComparison() {
   ])
   const [showScrollTop, setShowScrollTop] = useState(false)
 
-  // Add this near the top of the component
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
@@ -104,7 +108,6 @@ export default function ProductComparison() {
 
     if (value.trim().length > 2) {
       try {
-        // Mock suggestions - in a real app, you would fetch from an API
         const mockSuggestions = [`${value} Pro`, `${value} Max`, `${value} Ultra`, `${value} Plus`, `${value} Mini`]
         setSuggestions(mockSuggestions)
         setShowSuggestions(true)
@@ -144,7 +147,6 @@ export default function ProductComparison() {
           product2: product2,
           comparison: data.comparison,
         })
-        // Save to recent comparisons if not already there
         setRecentComparisons((prev) => {
           const newComparison = { product1, product2 }
           const exists = prev.some(
@@ -153,7 +155,7 @@ export default function ProductComparison() {
               (item.product1 === product2 && item.product2 === product1),
           )
           if (!exists) {
-            return [newComparison, ...prev].slice(0, 5) // Keep only the 5 most recent
+            return [newComparison, ...prev].slice(0, 5);
           }
           return prev
         })
@@ -188,77 +190,30 @@ export default function ProductComparison() {
     recognition.start()
   }
 
-  const renderStars = (rating: string) => {
-    const ratingNum = Number.parseInt(rating)
-    return (
-      <div className="flex items-center gap-2">
-        <div className="flex">
-          {[...Array(5)].map((_, i) => (
-            <svg
-              key={i}
-              className={`w-5 h-5 ${i < ratingNum ? "text-yellow-400" : "text-gray-500"}`}
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
-          ))}
-        </div>
-        <span className="font-medium">{rating}/5</span>
-      </div>
-    )
-  }
-
-  const shareComparison = async () => {
-    if (!comparison) return
-
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: `${comparison.product1} vs ${comparison.product2} Comparison`,
-          text: `Check out this comparison between ${comparison.product1} and ${comparison.product2}!`,
-          url: window.location.href,
-        })
-      } else {
-        // Fallback for browsers that don't support the Web Share API
-        navigator.clipboard.writeText(window.location.href)
-        alert("Link copied to clipboard!")
-      }
-    } catch (err) {
-      console.error("Error sharing:", err)
-    }
-  }
   const copyComparison = async () => {
     if (!comparison) return
   
     try {
-      // Format the comparison data as text
       let comparisonText = `Comparison between ${comparison.product1} and ${comparison.product2}\n\n`
       
-      // Add ratings
       comparisonText += `Ratings:\n`
       comparisonText += `${comparison.product1}: ${comparison.comparison.ratings.product1}/5\n`
       comparisonText += `${comparison.product2}: ${comparison.comparison.ratings.product2}/5\n\n`
       
-      // Add recommendations
       comparisonText += `Recommendations:\n`
       comparisonText += `${comparison.product1}: ${comparison.comparison.final_recommendation_product1}\n`
       comparisonText += `${comparison.product2}: ${comparison.comparison.final_recommendation_product2}\n\n`
       
-      // Add overview
       comparisonText += `Overview:\n${comparison.comparison.overview}\n\n`
       
-      // Add price
       comparisonText += `Price Comparison:\n${comparison.comparison.price}\n\n`
       
-      // Add key features
       comparisonText += `Key Features:\n`
       comparison.comparison.key_features.forEach(feature => {
         comparisonText += `- ${feature}\n`
       })
       comparisonText += `\n`
       
-      // Add performance
       comparisonText += `Performance Comparison:\n`
       Object.entries(comparison.comparison.performance).forEach(([metric, details]) => {
         comparisonText += `${metric}:\n`
@@ -266,23 +221,19 @@ export default function ProductComparison() {
         comparisonText += `${comparison.product2}: ${details[1]}\n\n`
       })
       
-      // Add pros
       comparisonText += `Pros:\n`
       comparison.comparison.pros.forEach(pro => {
         comparisonText += `- ${pro}\n`
       })
       comparisonText += `\n`
       
-      // Add cons
       comparisonText += `Cons:\n`
       comparison.comparison.cons.forEach(con => {
         comparisonText += `- ${con}\n`
       })
   
-      // Copy to clipboard
       await navigator.clipboard.writeText(comparisonText)
       
-      // Show success message
       const button = document.getElementById('copy-comparison-button')
       if (button) {
         const originalText = button.textContent
@@ -314,7 +265,7 @@ export default function ProductComparison() {
             className="flex items-center space-x-3"
           >
             <Link href="/" className="flex items-center space-x-3">
-              <Bot className="w-16 h-16 lg:w-8 lg:h-8 text-pink-500" />
+              <Webhook className="w-16 h-16 lg:w-8 lg:h-8 text-pink-500" />
               <span className="text-2xl lg:text-xl mt-2 lg:mt-1 font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-purple-500">
                 GadgetGlimpse
               </span>
@@ -530,56 +481,71 @@ export default function ProductComparison() {
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
   {/* Product 1 Card */}
-  <Card className="bg-gray-800/50 border-gray-700 overflow-hidden">
-    <div className="h-2 bg-gradient-to-r from-purple-500 to-purple-700"></div>
-    <CardHeader>
-      <CardTitle className="flex justify-between items-center">
-        <span>{comparison.product1}</span>
-        <Badge variant="outline" className="bg-purple-900/30 text-purple-300 border-purple-700">
-          Recommendation: {comparison.comparison.final_recommendation_product1}
-        </Badge>
-      </CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div className="flex items-center gap-3">
-        <div className="bg-purple-900/20 p-3 rounded-lg border border-purple-800/50">
-          <DollarSign className="text-purple-400 w-5 h-5" />
-        </div>
-        <div>
-          <p className="text-sm text-gray-400">Price</p>
-          <p className="text-xl font-bold text-purple-200">
-            {comparison.comparison.priceShort.product1}
-          </p>
-        </div>
+  {/* Product 1 Card - Blue/Purple Theme */}
+<Card className="bg-gray-800/50 border-gray-700 overflow-hidden shadow-lg">
+  <div className="h-2 bg-gradient-to-r from-indigo-500 to-purple-600"></div>
+  <CardHeader>
+    <CardTitle className="flex justify-between items-center">
+      <span className="text-indigo-100">{comparison.product1}</span>
+      <Badge variant="outline" className="bg-indigo-900/30 text-indigo-300 border-indigo-700">
+        Recommendation: {comparison.comparison.final_recommendation_product1}
+      </Badge>
+    </CardTitle>
+  </CardHeader>
+  <CardContent>
+    <div className="flex items-center gap-3">
+      <div className="bg-indigo-900/30 p-3 rounded-lg border border-indigo-800/50 shadow-sm">
+        <DollarSign className="text-indigo-400 w-5 h-5" />
       </div>
-    </CardContent>
-  </Card>
+      <div>
+        <p className="text-sm text-indigo-300/80">Price</p>
+        <p className="text-xl font-bold text-indigo-100">
+          {comparison.comparison.priceShort.product1}
+        </p>
+      </div>
+    </div>
+  </CardContent>
+  <CardFooter className="pt-0">
+    <div className="w-full bg-indigo-900/20 rounded-lg p-3 border border-indigo-800/30">
+      <p className="text-sm text-indigo-200">
+         {comparison.comparison.bestFor.product1}
+      </p>
+    </div>
+  </CardFooter>
+</Card>
 
-  {/* Product 2 Card */}
-  <Card className="bg-gray-800/50 border-gray-700 overflow-hidden">
-    <div className="h-2 bg-gradient-to-r from-blue-500 to-blue-700"></div>
-    <CardHeader>
-      <CardTitle className="flex justify-between items-center">
-        <span>{comparison.product2}</span>
-        <Badge variant="outline" className="bg-blue-900/30 text-blue-300 border-blue-700">
-          Recommendation: {comparison.comparison.final_recommendation_product2}
-        </Badge>
-      </CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div className="flex items-center gap-3">
-        <div className="bg-blue-900/20 p-3 rounded-lg border border-blue-800/50">
-          <DollarSign className="text-blue-400 w-5 h-5" />
-        </div>
-        <div>
-          <p className="text-sm text-gray-400">Price</p>
-          <p className="text-xl font-bold text-blue-200">
-            {comparison.comparison.priceShort.product2}
-          </p>
-        </div>
+{/* Product 2 Card - Amber Theme */}
+<Card className="bg-gray-800/50 border-gray-700 overflow-hidden shadow-lg">
+  <div className="h-2 bg-gradient-to-r from-amber-500 to-orange-600"></div>
+  <CardHeader>
+    <CardTitle className="flex justify-between items-center">
+      <span className="text-amber-100">{comparison.product2}</span>
+      <Badge variant="outline" className="bg-amber-900/30 text-amber-300 border-amber-700">
+        Recommendation: {comparison.comparison.final_recommendation_product2}
+      </Badge>
+    </CardTitle>
+  </CardHeader>
+  <CardContent>
+    <div className="flex items-center gap-3">
+      <div className="bg-amber-900/30 p-3 rounded-lg border border-amber-800/50 shadow-sm">
+        <DollarSign className="text-amber-400 w-5 h-5" />
       </div>
-    </CardContent>
-  </Card>
+      <div>
+        <p className="text-sm text-amber-300/80">Price</p>
+        <p className="text-xl font-bold text-amber-100">
+          {comparison.comparison.priceShort.product2}
+        </p>
+      </div>
+    </div>
+  </CardContent>
+  <CardFooter className="pt-0">
+    <div className="w-full bg-amber-900/20 rounded-lg p-3 border border-amber-800/30">
+      <p className="text-sm text-amber-200">
+         {comparison.comparison.bestFor.product2}
+      </p>
+    </div>
+  </CardFooter>
+</Card>
 </div>
 
                 <div className="flex justify-end mb-4 gap-2">
@@ -610,7 +576,7 @@ export default function ProductComparison() {
 
                 {/* Tabs Navigation */}
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                  <TabsList className="grid grid-cols-5 h-full w-full bg-gray-800/70 p-1 overflow-x-auto">
+                  <TabsList className="grid gap-2 grid-cols-5 h-full w-full bg-gray-800/70 p-1 overflow-x-auto">
                     <TabsTrigger
                       value="overview"
                       className="cursor-pointer data-[state=active]:bg-purple-600/30 data-[state=active]:text-purple-200 px-2 md:px-4 py-1 md:py-2 text-xs md:text-sm"
@@ -654,70 +620,102 @@ export default function ProductComparison() {
 
                   {/* Overview Tab */}
                   <TabsContent value="overview" className="mt-6">
-                    <Card className="bg-gray-800/50 border-gray-700">
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <Info className="text-purple-400" />
-                          Comparison Overview
-                        </CardTitle>
-                        <CardDescription className="text-gray-400">
-                          A high-level comparison between {comparison.product1} and {comparison.product2}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="prose prose-invert max-w-none">
-                          <p className="text-sm md:text-base text-gray-300 leading-relaxed">
-                            {comparison.comparison.overview}
-                          </p>
-                        </div>
+                  <Card className="bg-gray-800/50 border-gray-700 shadow-lg backdrop-blur-sm">
+  <CardHeader>
+    <CardTitle className="flex items-center gap-2 text-white">
+      <Info className="text-indigo-400" />
+      Comparison Overview
+    </CardTitle>
+    <CardDescription className="text-gray-400">
+      A high-level comparison between {comparison.product1} and {comparison.product2}
+    </CardDescription>
+  </CardHeader>
+  <CardContent>
+    <div className="prose prose-invert max-w-none">
+      <p className="text-base text-gray-300 leading-relaxed">{comparison.comparison.overview}</p>
+    </div>
 
-                        <div className="mt-6 md:mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                          <div className="bg-gray-700/30 rounded-lg p-3 md:p-4 border border-gray-700">
-                            <h4 className="text-sm md:text-base font-medium mb-2 md:mb-3 text-purple-300">
-                              {comparison.product1}
-                            </h4>
-                            <div className="space-y-3 md:space-y-4">
-                              <div>
-                                <div className="flex justify-between mb-1">
-                                  <span className="text-xs text-gray-400">Rating</span>
-                                  <span className="text-xs font-medium text-purple-300">
-                                    {comparison.comparison.ratings.product1}/5
-                                  </span>
-                                </div>
-                                <Progress
-                                  value={Number.parseInt(comparison.comparison.ratings.product1) * 20}
-                                  className="h-1.5 md:h-2 bg-gray-700"
-                                >
-                                  <div className="h-full bg-gradient-to-r from-purple-500 to-purple-700 rounded-full" />
-                                </Progress>
-                              </div>
-                            </div>
-                          </div>
+    <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Product 1 Card - Blue/Purple Theme */}
+      <div className="bg-gradient-to-br from-indigo-900/30 via-gray-800/50 to-purple-900/20 rounded-xl p-5 border border-indigo-700/40 shadow-lg hover:border-indigo-500/50 transition-all">
+        <div className="absolute -top-3 -left-3 w-6 h-6 bg-indigo-500 rounded-full blur-xl opacity-30"></div>
+        <div className="absolute -bottom-3 -right-3 w-6 h-6 bg-purple-600 rounded-full blur-xl opacity-30"></div>
+        
+        <h4 className="text-lg font-semibold mb-4 text-indigo-200 flex items-center gap-3">
+          <span className="w-3 h-3 bg-indigo-400 rounded-full flex-shrink-0"></span>
+          {comparison.product1}
+        </h4>
+        
+        <div className="space-y-5">
+          <div>
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm text-indigo-300/80">Rating</span>
+              <span className="text-sm font-medium bg-indigo-900/40 px-2 py-1 rounded-md text-indigo-200">
+                {comparison.comparison.ratings.product1}/5
+              </span>
+            </div>
+            <Progress
+              value={Number.parseInt(comparison.comparison.ratings.product1) * 20}
+              className="h-2 bg-gray-700/80"
+            >
+              <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full" />
+            </Progress>
+          </div>
+          
+          <div className="pt-2">
+            <p className="text-sm text-gray-300">
+              <span className="font-medium text-indigo-300">Price:</span>{" "}
+              <span className="font-medium">{comparison.comparison.priceShort.product1}</span>
+            </p>
+            <p className="text-sm text-gray-300 mt-2">
+              <span className="font-medium text-indigo-300">Recommendation:</span>{" "}
+              {comparison.comparison.final_recommendation_product1}
+            </p>
+          </div>
+        </div>
+      </div>
 
-                          <div className="bg-gray-700/30 rounded-lg p-3 md:p-4 border border-gray-700">
-                            <h4 className="text-sm md:text-base font-medium mb-2 md:mb-3 text-blue-300">
-                              {comparison.product2}
-                            </h4>
-                            <div className="space-y-3 md:space-y-4">
-                              <div>
-                                <div className="flex justify-between mb-1">
-                                  <span className="text-xs text-gray-400">Rating</span>
-                                  <span className="text-xs font-medium text-blue-300">
-                                    {comparison.comparison.ratings.product2}/5
-                                  </span>
-                                </div>
-                                <Progress
-                                  value={Number.parseInt(comparison.comparison.ratings.product2) * 20}
-                                  className="h-1.5 md:h-2 bg-gray-700"
-                                >
-                                  <div className="h-full bg-gradient-to-r from-blue-500 to-blue-700 rounded-full" />
-                                </Progress>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+      {/* Product 2 Card - Amber Theme */}
+      <div className="bg-gradient-to-br from-amber-900/30 via-gray-800/50 to-orange-900/20 rounded-xl p-5 border border-amber-700/40 shadow-lg hover:border-amber-500/50 transition-all">
+        <div className="absolute -top-3 -left-3 w-6 h-6 bg-amber-500 rounded-full blur-xl opacity-30"></div>
+        <div className="absolute -bottom-3 -right-3 w-6 h-6 bg-orange-600 rounded-full blur-xl opacity-30"></div>
+        
+        <h4 className="text-lg font-semibold mb-4 text-amber-200 flex items-center gap-3">
+          <span className="w-3 h-3 bg-amber-400 rounded-full flex-shrink-0"></span>
+          {comparison.product2}
+        </h4>
+        
+        <div className="space-y-5">
+          <div>
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm text-amber-300/80">Rating</span>
+              <span className="text-sm font-medium bg-amber-900/40 px-2 py-1 rounded-md text-amber-200">
+                {comparison.comparison.ratings.product2}/5
+              </span>
+            </div>
+            <Progress
+              value={Number.parseInt(comparison.comparison.ratings.product2) * 20}
+              className="h-2 bg-gray-700/80"
+            >
+              <div className="h-full bg-gradient-to-r from-amber-500 to-orange-600 rounded-full" />
+            </Progress>
+          </div>
+          
+          <div className="pt-2">
+            <p className="text-sm text-gray-300">
+              <span className="font-medium text-amber-300">Price:</span>{" "}
+              <span className="font-medium">{comparison.comparison.priceShort.product2}</span>
+            </p>
+            <p className="text-sm text-gray-300 mt-2">
+              <span className="font-medium text-amber-300">Recommendation:</span>{" "}
+              {comparison.comparison.final_recommendation_product2}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </CardContent>
+</Card>
                   </TabsContent>
 
                   {/* Price Tab */}
@@ -792,18 +790,19 @@ export default function ProductComparison() {
                               </AccordionTrigger>
                               <AccordionContent className="pt-1 md:pt-2 pb-3 md:pb-4">
                                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
-                                  <div className="bg-purple-900/20 border border-purple-800/50 rounded-lg p-3 md:p-4">
-                                    <h5 className="text-xs md:text-sm font-medium text-purple-300 mb-1 md:mb-2">
-                                      {comparison.product1}
-                                    </h5>
-                                    <p className="text-xs md:text-sm text-gray-300">{details[0]}</p>
-                                  </div>
-                                  <div className="bg-blue-900/20 border border-blue-800/50 rounded-lg p-3 md:p-4">
-                                    <h5 className="text-xs md:text-sm font-medium text-blue-300 mb-1 md:mb-2">
-                                      {comparison.product2}
-                                    </h5>
-                                    <p className="text-xs md:text-sm text-gray-300">{details[1]}</p>
-                                  </div>
+<div className="bg-indigo-900/20 border border-indigo-800/50 rounded-lg p-3 md:p-4 shadow-sm">
+  <h5 className="text-xs md:text-sm font-medium text-indigo-300 mb-1 md:mb-2">
+    {comparison.product1}
+  </h5>
+  <p className="text-xs md:text-sm text-indigo-100">{details[0]}</p>
+</div>
+
+<div className="bg-amber-900/20 border border-amber-800/50 rounded-lg p-3 md:p-4 shadow-sm">
+  <h5 className="text-xs md:text-sm font-medium text-amber-300 mb-1 md:mb-2">
+    {comparison.product2}
+  </h5>
+  <p className="text-xs md:text-sm text-amber-100">{details[1]}</p>
+</div>
                                 </div>
                               </AccordionContent>
                             </AccordionItem>
